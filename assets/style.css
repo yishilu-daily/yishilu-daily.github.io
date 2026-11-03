@@ -1245,11 +1245,11 @@ article.about {
 }
 
 .brief-up {
-  color: #9f2d2d;
+  color: #ef5d5d;
 }
 
 .brief-down {
-  color: #1d7a45;
+  color: #3dbe7a;
 }
 
 .brief-commentary,
@@ -1498,14 +1498,40 @@ body.brief-fit .briefing {
   margin: 0 8px;
   display: flex;
   flex-direction: column;
-  background: var(--card);
-  border: 1px solid var(--line-mid);
-  border-radius: 16px;
-  box-shadow: var(--shadow);
+  position: relative;
+  background:
+    radial-gradient(ellipse at 50% 42%, rgba(196, 164, 106, 0.16), transparent 58%),
+    #100e0c;
+  color: #f4efe6;
+  border: 1px solid rgba(212, 180, 131, 0.45);
+  border-radius: 18px;
+  box-shadow: 0 18px 40px -28px rgba(0, 0, 0, 0.8);
   overflow: hidden;
   font-size: 12px;
   line-height: 1.25;
   letter-spacing: 0;
+}
+
+body.brief-fit .briefing::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: min(280px, 78%);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: url("/assets/logo.png") center / contain no-repeat;
+  opacity: 0.08;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body.brief-fit .brief-head,
+body.brief-fit .brief-viewport,
+body.brief-fit .brief-foot {
+  position: relative;
+  z-index: 1;
 }
 
 body.brief-fit .brief-head {
@@ -1513,30 +1539,64 @@ body.brief-fit .brief-head {
   flex-direction: row;
   align-items: center;
   margin: 0;
-  padding: 7px 10px 4px;
-  gap: 8px;
+  padding: 7px 8px 5px;
+  gap: 6px;
+  border-bottom: 1px solid rgba(212, 180, 131, 0.35);
 }
 
-body.brief-fit .brief-head .eyebrow {
-  display: none;
+body.brief-fit .brief-logo {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid #e4c98a;
+  box-shadow: 0 0 0 1px rgba(90, 68, 32, 0.8);
+  overflow: hidden;
+  background: #0c0b0a;
+}
+
+body.brief-fit .brief-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+body.brief-fit .brief-titleblock {
+  min-width: 0;
+  flex: 1;
 }
 
 body.brief-fit .brief-head h2 {
-  font-size: 1rem;
-  line-height: 1.2;
-  letter-spacing: 0.06em;
+  color: #f0e2c0;
+  font-size: 0.98rem;
+  line-height: 1.15;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
 body.brief-fit .brief-edition {
   margin-top: 1px;
-  font-size: 0.68rem;
+  color: #c9c1b4;
+  font-size: 0.66rem;
   line-height: 1.2;
+  letter-spacing: 0.04em;
 }
 
 body.brief-fit .brief-tab {
-  min-height: 26px;
-  padding: 0 8px;
-  font-size: 0.72rem;
+  min-height: 24px;
+  min-width: 34px;
+  padding: 0 6px;
+  font-size: 0.66rem;
+  color: #cbbfa8;
+  background: transparent;
+  border-color: rgba(212, 180, 131, 0.4);
+}
+
+body.brief-fit .brief-tab[aria-selected="true"] {
+  color: #f6edd8;
+  background: rgba(228, 201, 138, 0.14);
+  border-color: #e4c98a;
 }
 
 body.brief-fit .brief-viewport {
@@ -1558,28 +1618,45 @@ body.brief-fit .brief-page:not([hidden]) {
 }
 
 body.brief-fit .brief-card {
-  background: none;
-  border: 0;
+  background: rgba(16, 14, 12, 0.55);
+  border: 1px solid rgba(212, 180, 131, 0.42);
   box-shadow: none;
-  border-radius: 0;
-  padding: 0;
-  margin: 0 0 3px;
+  border-radius: 12px;
+  padding: 4px 7px 3px;
+  margin: 0 0 4px;
 }
 
 body.brief-fit .brief-card header,
 body.brief-fit .brief-card h3 {
   margin: 0;
-  gap: 6px;
+  gap: 4px;
 }
 
 body.brief-fit .brief-card h3 {
-  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  color: #e4c98a;
+  font-size: 0.74rem;
   line-height: 1.2;
   letter-spacing: 0.08em;
 }
 
+body.brief-fit .brief-icon {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 body.brief-fit .brief-asof {
-  font-size: 0.62rem;
+  color: #9d968c;
+  font-size: 0.58rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 body.brief-fit .brief-quote {
@@ -1592,17 +1669,54 @@ body.brief-fit .brief-quote {
 }
 
 body.brief-fit .brief-quote.featured {
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+body.brief-fit .brief-quote.featured .brief-name {
+  grid-column: 1 / -1;
 }
 
 body.brief-fit .brief-quote.featured .brief-value {
-  font-size: 1.15rem;
-  line-height: 1.1;
+  font-size: 1.28rem;
+  line-height: 1.05;
   text-align: left;
+  color: #f3e6c8;
 }
 
 body.brief-fit .brief-quote.featured .brief-move {
+  align-self: end;
+}
+
+body.brief-fit .brief-name {
+  color: #ddd6cb;
+}
+
+body.brief-fit .brief-value {
+  color: #f7f1e6;
+  font-family: var(--serif);
+  font-weight: 600;
   text-align: right;
+}
+
+body.brief-fit .brief-unit {
+  margin-left: 3px;
+  color: #b7b0a4;
+  font-family: var(--sans);
+  font-size: 0.58rem;
+  font-weight: 500;
+}
+
+body.brief-fit .brief-move {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.05;
+  font-size: 0.62rem;
+  white-space: nowrap;
+}
+
+body.brief-fit .brief-pct {
+  font-size: 0.58rem;
 }
 
 body.brief-fit .brief-name,
@@ -1619,10 +1733,13 @@ body.brief-fit .brief-name {
 body.brief-fit .brief-commentary,
 body.brief-fit .brief-aside {
   margin: 2px 0 3px;
-  padding: 4px 6px;
-  border-radius: 8px;
-  font-size: 0.66rem;
-  line-height: 1.35;
+  padding: 3px 6px;
+  border-radius: 0 6px 6px 0;
+  border-left: 2px solid #d4b483;
+  background: rgba(255, 248, 230, 0.04);
+  color: #e4ddd2;
+  font-size: 0.62rem;
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -1653,10 +1770,20 @@ body.brief-fit .brief-points p {
   min-width: 0;
 }
 
-body.brief-fit .brief-index {
+body.brief-fit .brief-index,
+body.brief-fit .brief-story-no {
   width: 16px;
   height: 16px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid #e4c98a;
+  color: #f0e2c0;
+  font-family: var(--serif);
   font-size: 0.62rem;
+  font-weight: 600;
+  line-height: 1;
 }
 
 body.brief-fit .brief-point-text {
@@ -1669,9 +1796,16 @@ body.brief-fit .brief-point-text {
 }
 
 body.brief-fit .brief-source {
-  margin-top: 0;
-  font-size: 0.58rem;
+  display: block;
+  margin-top: 1px;
+  color: #9d968c;
+  font-size: 0.56rem;
   line-height: 1.2;
+  text-align: right;
+}
+
+body.brief-fit .brief-point-text {
+  color: #f4efe6;
 }
 
 body.brief-fit .issue-group {
@@ -1685,37 +1819,89 @@ body.brief-fit .brief-stories {
 }
 
 body.brief-fit .brief-story {
-  grid-template-columns: 72px minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: 52px 16px minmax(0, 1fr) auto;
+  gap: 3px 5px;
+  align-items: center;
+  color: #f4efe6;
 }
 
 body.brief-fit .brief-story-title {
-  font-size: 0.74rem;
+  color: #f7f1e6;
+  font-size: 0.68rem;
   line-height: 1.25;
 }
 
-body.brief-fit .brief-story-source,
+body.brief-fit .brief-story-source {
+  margin: 0;
+  max-width: 6.6em;
+  color: #9d968c;
+  font-size: 0.54rem;
+  line-height: 1.2;
+  text-align: right;
+  white-space: normal;
+}
+
 body.brief-fit .thumb-credit {
+  display: block;
   margin-top: 1px;
-  font-size: 0.58rem;
-  color: var(--faint);
+  color: #8f887e;
   background: none;
   position: static;
   padding: 0;
+  font-size: 0.52rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+body.brief-fit .brief-foot {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 8px 6px;
 }
 
 body.brief-fit .brief-disclaimer {
-  flex: 0 0 auto;
+  flex: 1;
+  min-width: 0;
   margin: 0;
-  padding: 2px 10px 6px;
-  font-size: 9px;
+  padding: 0;
+  color: #9d968c;
+  font-size: 8px;
   line-height: 1.3;
+}
+
+body.brief-fit .brief-pager {
+  margin: 0;
+  color: #d4b483;
+  font-size: 8px;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 @media (max-width: 420px) {
   .brief-head {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (max-height: 700px) {
+  body.brief-fit .brief-card {
+    margin-bottom: 2px;
+    padding-top: 2px;
+    padding-bottom: 1px;
+  }
+
+  body.brief-fit .brief-aside,
+  body.brief-fit .brief-point-text {
+    -webkit-line-clamp: 1;
+  }
+
+  body.brief-fit .brief-points li {
+    padding: 1px 0;
   }
 }
 

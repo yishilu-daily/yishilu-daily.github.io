@@ -16,6 +16,11 @@
         tab.setAttribute("aria-selected", selected ? "true" : "false");
         tab.tabIndex = selected ? 0 : -1;
       });
+      var name = pages[index].getAttribute("data-brief-name") || "";
+      var title = root.querySelector("[data-brief-title]");
+      var pager = root.querySelector("[data-brief-pager]");
+      if (title && name) title.textContent = name;
+      if (pager && name) pager.textContent = name + " · " + (index + 1) + "/" + pages.length;
     }
 
     tabs.forEach(function (tab) {

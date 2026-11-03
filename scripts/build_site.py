@@ -415,28 +415,84 @@ def quote_move(row: dict) -> str:
     if direction not in {"up", "down"} and not change and not pct:
         return ""
     arrow = {"up": "▲", "down": "▼"}.get(direction, "")
-    text = f"{arrow}{change}".strip()
+    delta = f"{arrow}{change}".strip()
+    pct_html = ""
     if pct:
-        text = f"{text} ({pct})".strip()
+        shown = pct if pct.startswith("(") else f"({pct})"
+        pct_html = f'<span class="brief-pct">{esc(shown)}</span>'
     klass = f" brief-{direction}" if direction in {"up", "down"} else ""
-    return f'<span class="brief-move{klass}">{esc(text)}</span>'
+    return f'<span class="brief-move{klass}"><span class="brief-delta">{esc(delta)}</span>{pct_html}</span>'
 
 
 def quote_row(row: dict, *, featured: bool = False) -> str:
     unit = str(row.get("unit") or "").strip()
     value = str(row.get("value") or "").strip()
-    shown = f"{value} {unit}".strip()
+    direction = str(row.get("direction") or "").strip().lower()
     note = str(row.get("note") or "").strip()
     # Long methodology notes stay on the row as a tooltip so the one-screen card keeps a single line.
     visible_note = note if note and len(note) <= 42 else ""
     extra = f'<span class="brief-note" title="{esc(note)}">{esc(visible_note)}</span>' if visible_note else ""
     row_title = f' title="{esc(note)}"' if note and not visible_note else ""
     name = str(row.get("name") or "")
+    value_klass = "brief-value"
+    if not featured and direction in {"up", "down"}:
+        value_klass += f" brief-{direction}"
+    unit_html = f'<span class="brief-unit">{esc(unit)}</span>' if unit else ""
     klass = "brief-quote featured" if featured else "brief-quote"
     return (
         f'<div class="{klass}"{row_title}><span class="brief-name" title="{esc(name)}">{esc(name)}</span>'
-        f'<span class="brief-value">{esc(shown)}</span>{quote_move(row)}{extra}</div>'
+        f'<span class="{value_klass}">{esc(value)}{unit_html}</span>{quote_move(row)}{extra}</div>'
     )
+
+
+def brief_icon(kind: str) -> str:
+    shapes = {
+        "chart": '<path d="M4 16V9M8 16V5M12 16v-6M16 16V7"/>',
+        "flag": '<path d="M4 3v14M4 4h10l-2 3 2 3H4"/>',
+        "globe": '<circle cx="10" cy="10" r="6.5"/><path d="M3.5 10h13M10 3.5c1.8 2 1.8 11 0 13M10 3.5c-1.8 2-1.8 11 0 13"/>',
+        "coins": '<ellipse cx="10" cy="6" rx="6" ry="2.2"/><path d="M4 6v3.5c0 1.2 2.7 2.2 6 2.2s6-1 6-2.2V6M4 9.5V13c0 1.2 2.7 2.2 6 2.2s6-1 6-2.2V9.5"/>',
+        "bank": '<path d="M3 8.5 10 4l7 4.5M4.5 8.5V15M8 8.5V15M12 8.5V15M15.5 8.5V15M3 16h14"/>',
+        "drop": '<path d="M10 3.5s4.5 4.6 4.5 7.4a4.5 4.5 0 0 1-9 0C5.5 8.1 10 3.5 10 3.5z"/>',
+        "news": '<path d="M5 4h7.5v12H5zM12.5 7H15v8.2A1.8 1.8 0 0 1 13.2 17M7 7.5h4M7 10h4M7 12.5h2.5"/>',
+        "coin": '<circle cx="10" cy="10" r="6.5"/><path d="M10 6.5v7M8.2 8.2h2.6a1.4 1.4 0 0 1 0 2.8H8.2"/>',
+        "shield": '<path d="M10 3.2 16 5.2v4.6c0 3.2-2.4 5.6-6 6.6-3.6-1-6-3.4-6-6.6V5.2z"/>',
+    }
+    return (
+        '<svg class="brief-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">'
+        f'{shapes.get(kind, shapes["chart"])}</svg>'
+    )
+
+
+SECTION_ICONS = {
+    "台股": "chart",
+    "美股": "flag",
+    "亞股": "globe",
+    "歐股": "globe",
+    "匯率（兌新台幣）": "coins",
+    "定存利率（臺灣銀行牌告）": "bank",
+    "原物料": "drop",
+    "財經焦點": "news",
+    "理財話題": "coin",
+    "保險新聞": "shield",
+}
+
+PAGE_TITLES = ("藝世錄股市動向", "藝世錄每日匯率", "藝世錄財金日報")
+
+
+def bracket(text: str) -> str:
+    text = text.strip()
+    if not text:
+        return ""
+    if text.startswith("〔") and text.endswith("〕"):
+        return text
+    return f"〔{text}〕"
+
+
+def short_md(day: str) -> str:
+    parts = day.split("-")
+    if len(parts) != 3 or not all(part.isdigit() for part in parts):
+        return day
+    return f"{int(parts[1])}/{int(parts[2])}"
 
 
 def quote_block(title: str, rows: list[dict], *, as_of: str = "", note: str = "", commentary: str = "", featured: bool = False) -> str:
@@ -445,8 +501,9 @@ def quote_block(title: str, rows: list[dict], *, as_of: str = "", note: str = ""
     body = "".join(quote_row(row, featured=featured and index == 0) for index, row in enumerate(rows))
     comment = f'<p class="brief-commentary" title="{esc(commentary)}">{esc(commentary)}</p>' if commentary else ""
     aside = f'<p class="brief-aside" title="{esc(note)}">{esc(note)}</p>' if note else ""
-    stamp = f'<span class="brief-asof">{esc(as_of)}</span>' if as_of else ""
-    return f'<section class="brief-card"><header><h3>{esc(title)}</h3>{stamp}</header>{body}{comment}{aside}</section>'
+    stamp = f'<span class="brief-asof">{esc(bracket(as_of))}</span>' if as_of else ""
+    icon = brief_icon(SECTION_ICONS.get(title, "chart"))
+    return f'<section class="brief-card"><header><h3>{icon}{esc(title)}</h3>{stamp}</header>{body}{comment}{aside}</section>'
 
 
 def numbered_block(title: str, items: list) -> str:
@@ -463,7 +520,7 @@ def numbered_block(title: str, items: list) -> str:
         if not text:
             continue
         credit = " ".join(part for part in (source, when) if part)
-        source_html = f'<span class="brief-source">{esc(credit)}</span>' if credit else ""
+        source_html = f'<span class="brief-source">{esc(bracket(credit))}</span>' if credit else ""
         rows.append(
             f'<li><span class="brief-index">{index}</span><p>'
             f'<span class="brief-point-text" title="{esc(text)}">{esc(text)}</span>{source_html}</p></li>'
@@ -477,12 +534,11 @@ def render_briefing(data: dict | None, posts: list[dict] | None = None) -> str:
     if not data:
         return ""
     day = str(data.get("date") or "")
-    edition = str(data.get("edition") or "晨間版").strip()
-    label = edition
+    label = ""
     if day:
         year, month, date = (int(part) for part in day.split("-"))
         weekday = "一二三四五六日"[datetime.fromisoformat(day).weekday()]
-        label = f"{year}/{month}/{date}（{weekday}）{edition}"
+        label = f"{year}/{month}/{date}（{weekday}）"
     tw = data.get("tw") if isinstance(data.get("tw"), dict) else {}
     page1 = "".join(
         [
@@ -522,17 +578,25 @@ def render_briefing(data: dict | None, posts: list[dict] | None = None) -> str:
         for index in range(len(pages))
     )
     sheets = "".join(
-        f'<div class="brief-page" data-brief-page="{index}"{" hidden" if index else ""}>{html}</div>'
+        f'<div class="brief-page" data-brief-page="{index}" data-brief-name="{esc(PAGE_TITLES[index])}"{" hidden" if index else ""}>{html}</div>'
         for index, html in enumerate(pages)
     )
-    disclaimer = str(data.get("disclaimer") or "※本報資訊僅供參考，不構成投資建議")
+    disclaimer = str(data.get("disclaimer") or "本報資訊僅供參考，不構成投資建議").strip()
+    if disclaimer and not disclaimer.startswith("※"):
+        disclaimer = f"※{disclaimer}"
+    opener = PAGE_TITLES[0]
     return (
         '<section class="briefing" data-briefing>'
-        '<header class="brief-head"><div><p class="eyebrow">Morning Brief</p><h2>藝世錄財金晨報</h2>'
+        '<header class="brief-head">'
+        '<span class="brief-logo"><img src="/assets/logo.png" alt="" width="64" height="64"></span>'
+        '<div class="brief-titleblock">'
+        f'<h2 data-brief-title>{esc(opener)}</h2>'
         f'<p class="brief-edition">{esc(label)}</p></div>'
         f'<div class="brief-tabs" role="tablist" aria-label="晨報頁面">{tabs}</div></header>'
         f'<div class="brief-viewport">{sheets}</div>'
-        f'<p class="brief-disclaimer">{esc(disclaimer)}</p></section>'
+        '<footer class="brief-foot">'
+        f'<p class="brief-disclaimer">{esc(disclaimer)}</p>'
+        f'<p class="brief-pager" data-brief-pager>{esc(opener)} · 1/{len(pages)}</p></footer></section>'
     )
 
 
@@ -540,16 +604,18 @@ def brief_story(post: dict, index: int, *, eager: bool) -> str:
     loading = 'fetchpriority="high"' if eager else 'decoding="async"'
     credit = post.get("image_credit") or "示意圖（AI 生成）"
     permalink = f'/column/{esc(post["date"])}/{esc(post["slug"])}/'
+    tag = bracket(f'{post["source_name"]} {short_md(post["date"])}'.strip())
     return (
         "<li>"
         f'<a class="brief-story" href="{permalink}">'
         '<span class="brief-thumb">'
         f'<img src="{esc(post["image_url"])}" alt="" width="128" height="72" {loading} title="{esc(credit)}"></span>'
+        f'<span class="brief-story-no">{index}</span>'
         '<span class="brief-story-copy">'
-        f'<span class="brief-story-title"><span class="brief-story-no">{index}</span>{esc(post["title"])}</span>'
-        f'<span class="brief-story-source">{esc(post["source_name"])} · {esc(format_date(post["date"]))}</span>'
-        f'<span class="thumb-credit">{esc(credit)}</span>'
-        "</span></a></li>"
+        f'<span class="brief-story-title">{esc(post["title"])}</span>'
+        f'<span class="thumb-credit">{esc(credit)}</span></span>'
+        f'<span class="brief-story-source">{esc(tag)}</span>'
+        "</a></li>"
     )
 
 
@@ -570,7 +636,6 @@ def render_post_groups(posts: list[dict], *, latest: bool, titles: dict[str, str
         if not chosen:
             continue
         label = titles.get(key) or ""
-        heading = f'<h2 class="issue-group">{esc(label)}</h2>' if label else ""
         cards = []
         for index, post in enumerate(chosen, start=1):
             eager = latest and not eager_used
@@ -579,8 +644,13 @@ def render_post_groups(posts: list[dict], *, latest: bool, titles: dict[str, str
                 cards.append(brief_story(post, index, eager=eager))
             else:
                 cards.append(issue_card(post, index, eager=eager))
-        kind = "brief-stories" if compact else "issue-list"
-        parts.append(f'{heading}<ol class="{kind}">{"".join(cards)}</ol>')
+        if compact:
+            icon = brief_icon(SECTION_ICONS.get(label, "coin")) if label else ""
+            heading = f"<header><h3>{icon}{esc(label)}</h3></header>" if label else ""
+            parts.append(f'<section class="brief-card">{heading}<ol class="brief-stories">{"".join(cards)}</ol></section>')
+        else:
+            heading = f'<h2 class="issue-group">{esc(label)}</h2>' if label else ""
+            parts.append(f'{heading}<ol class="issue-list">{"".join(cards)}</ol>')
     return "".join(parts)
 
 
@@ -634,7 +704,7 @@ def render_issues(posts: list[dict]) -> str:
         '<p class="issue-empty" data-issue-empty hidden><span data-empty-label></span>這一天還沒有專欄。用前一天或後一天，跳到最近有文章的日子。</p>'
         + "".join(sections)
         + '<script src="/assets/daily.js?v=3" defer></script>'
-        '<script src="/assets/briefing.js?v=1" defer></script></div>'
+        '<script src="/assets/briefing.js?v=2" defer></script></div>'
     )
 
 
