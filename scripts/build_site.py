@@ -247,7 +247,7 @@ def json_ld(payload: dict) -> str:
     return json.dumps(payload, ensure_ascii=False).replace("<", "\\u003c")
 
 
-def page(template: str, settings: dict, *, title: str, description: str, canonical: str, image: str, main: str, current: str, og_type: str = "website", og_title: str = "") -> str:
+def page(template: str, settings: dict, *, title: str, description: str, canonical: str, image: str, main: str, current: str, og_type: str = "website", og_title: str = "", body_class: str = "") -> str:
     nav = {"TODAY": "", "ARCHIVE": "", "ABOUT": ""}
     if current in nav:
         nav[current] = 'aria-current="page"'
@@ -281,6 +281,7 @@ def page(template: str, settings: dict, *, title: str, description: str, canonic
             "NAV_TOOLS": 'aria-current="page"' if current == "TOOLS" else "",
             "MAIN": main,
             "YEAR": year,
+            "BODY_CLASS": body_class,
         },
     )
 
@@ -426,10 +427,14 @@ def quote_row(row: dict, *, featured: bool = False) -> str:
     value = str(row.get("value") or "").strip()
     shown = f"{value} {unit}".strip()
     note = str(row.get("note") or "").strip()
-    extra = f'<span class="brief-note">{esc(note)}</span>' if note else ""
+    # Long methodology notes stay on the row as a tooltip so the one-screen card keeps a single line.
+    visible_note = note if note and len(note) <= 42 else ""
+    extra = f'<span class="brief-note" title="{esc(note)}">{esc(visible_note)}</span>' if visible_note else ""
+    row_title = f' title="{esc(note)}"' if note and not visible_note else ""
+    name = str(row.get("name") or "")
     klass = "brief-quote featured" if featured else "brief-quote"
     return (
-        f'<div class="{klass}"><span class="brief-name">{esc(str(row.get("name") or ""))}</span>'
+        f'<div class="{klass}"{row_title}><span class="brief-name" title="{esc(name)}">{esc(name)}</span>'
         f'<span class="brief-value">{esc(shown)}</span>{quote_move(row)}{extra}</div>'
     )
 
@@ -438,8 +443,8 @@ def quote_block(title: str, rows: list[dict], *, as_of: str = "", note: str = ""
     if not rows and not note and not commentary:
         return ""
     body = "".join(quote_row(row, featured=featured and index == 0) for index, row in enumerate(rows))
-    comment = f'<p class="brief-commentary">{esc(commentary)}</p>' if commentary else ""
-    aside = f'<p class="brief-aside">{esc(note)}</p>' if note else ""
+    comment = f'<p class="brief-commentary" title="{esc(commentary)}">{esc(commentary)}</p>' if commentary else ""
+    aside = f'<p class="brief-aside" title="{esc(note)}">{esc(note)}</p>' if note else ""
     stamp = f'<span class="brief-asof">{esc(as_of)}</span>' if as_of else ""
     return f'<section class="brief-card"><header><h3>{esc(title)}</h3>{stamp}</header>{body}{comment}{aside}</section>'
 
@@ -459,7 +464,10 @@ def numbered_block(title: str, items: list) -> str:
             continue
         credit = " ".join(part for part in (source, when) if part)
         source_html = f'<span class="brief-source">{esc(credit)}</span>' if credit else ""
-        rows.append(f"<li><span class=\"brief-index\">{index}</span><p>{esc(text)}{source_html}</p></li>")
+        rows.append(
+            f'<li><span class="brief-index">{index}</span><p>'
+            f'<span class="brief-point-text" title="{esc(text)}">{esc(text)}</span>{source_html}</p></li>'
+        )
     if not rows:
         return ""
     return f'<section class="brief-card"><h3>{esc(title)}</h3><ol class="brief-points">{"".join(rows)}</ol></section>'
@@ -504,6 +512,7 @@ def render_briefing(data: dict | None, posts: list[dict] | None = None) -> str:
         latest=False,
         titles={"finance": "理財話題", "insurance": "保險新聞"},
         include_default=False,
+        compact=True,
     )
     pages = [page1, page2, page3]
     if not pages:
@@ -527,7 +536,24 @@ def render_briefing(data: dict | None, posts: list[dict] | None = None) -> str:
     )
 
 
-def render_post_groups(posts: list[dict], *, latest: bool, titles: dict[str, str] | None = None, include_default: bool = True) -> str:
+def brief_story(post: dict, index: int, *, eager: bool) -> str:
+    loading = 'fetchpriority="high"' if eager else 'decoding="async"'
+    credit = post.get("image_credit") or "示意圖（AI 生成）"
+    permalink = f'/column/{esc(post["date"])}/{esc(post["slug"])}/'
+    return (
+        "<li>"
+        f'<a class="brief-story" href="{permalink}">'
+        '<span class="brief-thumb">'
+        f'<img src="{esc(post["image_url"])}" alt="" width="128" height="72" {loading} title="{esc(credit)}"></span>'
+        '<span class="brief-story-copy">'
+        f'<span class="brief-story-title"><span class="brief-story-no">{index}</span>{esc(post["title"])}</span>'
+        f'<span class="brief-story-source">{esc(post["source_name"])} · {esc(format_date(post["date"]))}</span>'
+        f'<span class="thumb-credit">{esc(credit)}</span>'
+        "</span></a></li>"
+    )
+
+
+def render_post_groups(posts: list[dict], *, latest: bool, titles: dict[str, str] | None = None, include_default: bool = True, compact: bool = False) -> str:
     buckets: dict[str, list[dict]] = {"finance": [], "insurance": [], "": []}
     for post in posts:
         buckets[post_group(post)].append(post)
@@ -549,8 +575,12 @@ def render_post_groups(posts: list[dict], *, latest: bool, titles: dict[str, str
         for index, post in enumerate(chosen, start=1):
             eager = latest and not eager_used
             eager_used = eager_used or eager
-            cards.append(issue_card(post, index, eager=eager))
-        parts.append(f'{heading}<ol class="issue-list">{"".join(cards)}</ol>')
+            if compact:
+                cards.append(brief_story(post, index, eager=eager))
+            else:
+                cards.append(issue_card(post, index, eager=eager))
+        kind = "brief-stories" if compact else "issue-list"
+        parts.append(f'{heading}<ol class="{kind}">{"".join(cards)}</ol>')
     return "".join(parts)
 
 
@@ -603,7 +633,7 @@ def render_issues(posts: list[dict]) -> str:
         f"{next_html}</form>"
         '<p class="issue-empty" data-issue-empty hidden><span data-empty-label></span>這一天還沒有專欄。用前一天或後一天，跳到最近有文章的日子。</p>'
         + "".join(sections)
-        + '<script src="/assets/daily.js?v=2" defer></script>'
+        + '<script src="/assets/daily.js?v=3" defer></script>'
         '<script src="/assets/briefing.js?v=1" defer></script></div>'
     )
 
@@ -768,9 +798,11 @@ def build(root: Path) -> list[dict]:
         cover_jpg(root / "posts" / post["date"] / post["image"], dest)
         share_images[post["slug"]] = absolute_image(settings, f"/media/{post['date']}/{post['slug']}.jpg")
     lead = None
+    latest_day = ""
     if posts:
         latest_day = max(post["date"] for post in posts)
         lead = min((post for post in posts if post["date"] == latest_day), key=lambda post: post["order"])
+    fit = "brief-fit" if latest_day and load_briefing(root, latest_day) else ""
     home_title = f"{format_date(lead['date'])}｜{settings['site_name']}" if lead else settings["site_name"]
     write_text(
         root / "index.html",
@@ -784,6 +816,7 @@ def build(root: Path) -> list[dict]:
             image=brand_image,
             main=render_home(posts, about_html),
             current="TODAY",
+            body_class=fit,
         ),
     )
     write_text(
@@ -798,6 +831,7 @@ def build(root: Path) -> list[dict]:
             image=brand_image,
             main=render_issues(posts),
             current="TODAY",
+            body_class=fit,
         ),
     )
     remove_stale(root, posts)

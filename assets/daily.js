@@ -68,6 +68,10 @@
     }
     setStep(prev, before(day || "9999-99-99"));
     setStep(next, after(day || "0000-00-00"));
+    var fitted = issues.some(function (issue) {
+      return !issue.hidden && issue.querySelector("[data-briefing]");
+    });
+    document.body.classList.toggle("brief-fit", fitted);
     return known;
   }
 
