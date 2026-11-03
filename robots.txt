@@ -1,5 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /q-yshow/
 
 Sitemap: https://yishilu-daily.github.io/sitemap.xml
