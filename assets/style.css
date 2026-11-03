@@ -1379,9 +1379,32 @@ article.about {
   line-height: 1.35;
 }
 
-.brief-story-no {
-  margin-right: 4px;
-  color: var(--gold-ink);
+.brief-story-no,
+.brief-index {
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #a5865a;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  justify-self: center;
+  flex-shrink: 0;
+  position: static;
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #6e5638;
+  background: transparent;
 }
 
 .brief-story-source {
@@ -1879,18 +1902,29 @@ body.brief-fit .brief-points p {
 
 body.brief-fit .brief-index,
 body.brief-fit .brief-story-no {
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+body.brief-fit .brief-story-no {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  font-size: 12px;
+}
+
+body.brief-fit .brief-index {
   width: 16px;
   height: 16px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: transparent;
-  border: 1px solid #a5865a;
-  color: #6e5638;
-  font-family: var(--serif);
-  font-size: 0.62rem;
-  font-weight: 600;
-  line-height: 1;
+  min-width: 16px;
+  font-size: 10px;
 }
 
 body.brief-fit .brief-point-text {
@@ -1925,7 +1959,7 @@ body.brief-fit .brief-stories {
 }
 
 body.brief-fit .brief-story {
-  grid-template-columns: 100px 20px minmax(0, 1fr);
+  grid-template-columns: 100px 24px minmax(0, 1fr);
   gap: 4px 8px;
   align-items: center;
   color: #1d1b19;
@@ -2131,7 +2165,7 @@ body.sheet-page main.wrap {
 }
 
 .family-card .brief-story {
-  grid-template-columns: 96px 20px minmax(0, 1fr);
+  grid-template-columns: 96px 24px minmax(0, 1fr);
   color: #1d1b19;
 }
 
@@ -2252,15 +2286,19 @@ body.sheet-page main.wrap {
 }
 
 .family-card .brief-story-no {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  margin: 0;
+  padding: 0;
   border-radius: 50%;
-  display: grid;
-  place-items: center;
-  border: 1px solid #a5865a;
-  color: #6e5638;
-  font-family: var(--serif);
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+  letter-spacing: 0;
+  font-size: 12px;
 }
 
 .family-card .brief-foot {
@@ -2331,7 +2369,7 @@ body.sheet-page main.wrap {
   }
 
   body.brief-fit .brief-story {
-    grid-template-columns: 68px 16px minmax(0, 1fr);
+    grid-template-columns: 68px 24px minmax(0, 1fr);
     gap: 3px 6px;
   }
 
