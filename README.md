@@ -64,8 +64,8 @@ tags:
 | --- | --- | --- |
 | `title` | 是 | 文章標題 |
 | `date` | 是 | `YYYY-MM-DD`，要和資料夾相同 |
-| `category` | 是 | 卡片上的分類，例如 `保險`、`理財`、`利率`、`退休`。若寫成 `finance` 或 `insurance`，會用來分組 |
-| `group` | 否 | `finance` 歸「財經新聞」，`insurance` 歸「保險新聞」。沒寫時，當天文章放在同一個清單 |
+| `category` | 是 | 卡片上的主題標籤，例如 `稅務與傳承`、`房地產`、`保險新聞`。不決定分組 |
+| `group` | 否 | 決定當天怎麼分組：`finance` 是「財經新聞」，`insurance` 是「保險新聞」。沒寫時，當天文章放在同一個清單 |
 | `summary` | 是 | 首頁卡片上的一兩句話 |
 | `image` | 是 | 同資料夾的圖片檔名 |
 | `image_credit` | 否 | 圖下的小字。沒寫時預設為 `示意圖（AI 生成）` |
@@ -78,7 +78,7 @@ tags:
 ## 頁面
 
 - 首頁打開最新一天的專欄。若當天有 `data/briefing/YYYY-MM-DD.json`，財金晨報會出現在文章前面。
-- 文章依 `group` 分成「財經新聞」和「保險新聞」，每組從 1 編號。沒有 `group` 的舊文章維持同一份清單。
+- 文章用 front matter 的 `group` 分成「財經新聞」（`finance`）和「保險新聞」（`insurance`），每組從 1 編號。`category` 只顯示在卡片上，當主題標籤。沒有 `group` 的舊文章維持同一份清單。
 - 每篇文章有自己的網址：`/column/YYYY-MM-DD/NN-slug/`。大圖、圖說、內文，最後是「新聞來源」。圖說來自 `image_credit`。
 - 分享到 LINE / Facebook 時，用的是該篇圖片。
 - `/archive/` 依日期瀏覽。

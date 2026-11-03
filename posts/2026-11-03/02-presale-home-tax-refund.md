@@ -2,6 +2,7 @@
 title: "買預售屋換屋要注意：重購退稅的兩年，從「登記日」起算"
 date: 2026-11-03
 category: "房地產"
+group: finance
 summary: "國稅局提醒，預售屋要完工交屋、完成所有權登記才算取得新房地；若距離出售舊屋超過兩年，即使早已簽約付款，也不能申請房地合一稅重購退稅。"
 image: "02-presale-home-tax-refund.webp"
 image_credit: "示意圖（AI 生成）"

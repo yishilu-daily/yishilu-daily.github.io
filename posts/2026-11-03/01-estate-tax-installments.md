@@ -2,6 +2,7 @@
 title: "遺贈稅分期取消30萬門檻：最多18期，但現金準備仍是關鍵"
 date: 2026-11-03
 category: "稅務與傳承"
+group: finance
 summary: "財政部修法後，遺產稅、贈與稅不論金額，只要確有繳現困難都可申請分期，最多18期並加計利息。分期是喘息空間，不是不用準備現金。"
 image: "01-estate-tax-installments.webp"
 image_credit: "示意圖（AI 生成）"

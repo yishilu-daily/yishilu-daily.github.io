@@ -2,6 +2,7 @@
 title: "利變壽險附一年後健康險全面停售：體況不好的人，該怎麼看自己的保障？"
 date: 2026-11-03
 category: "保險新聞"
+group: insurance
 summary: "因等待期長達一年、超過法規上限，這類「利變壽險附健康險」已陸續停售。對較難買一般醫療險的亞健康族群影響最大，現有保單先別急著動。"
 image: "03-health-rider-discontinued.webp"
 image_credit: "示意圖（AI 生成）"
