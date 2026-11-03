@@ -63,9 +63,20 @@ class SiteTests(unittest.TestCase):
         self.assertFalse(any(post["slug"] == "01-sample" for post in posts))
         build_site.build(ROOT)
         home = (ROOT / "index.html").read_text(encoding="utf-8")
-        self.assertEqual(home.count('class="feature-card"'), 3)
+        latest = max(post["date"] for post in posts)
+        self.assertEqual(home.count('class="issue-card"'), len(posts))
+        self.assertIn(f'data-latest="{latest}"', home)
         self.assertIn('<meta property="og:title" content="藝世錄金融理財日報">', home)
-        self.assertIn("我是許欣霈（Show），在富邦人壽擔任保險業務，同時負責單位主管的工作，也是藝世錄團隊的領導者。", home)
+        for post in posts:
+            if post["date"] == latest:
+                self.assertIn(post["title"], home)
+        daily = (ROOT / "daily" / "index.html").read_text(encoding="utf-8")
+        self.assertIn("/assets/daily.js", daily)
+        self.assertIn("前一天", daily)
+        self.assertIn("後一天", daily)
+        for day in sorted({post["date"] for post in posts}):
+            self.assertIn(f'data-issue="{day}"', daily)
+            self.assertIn(f'data-issue="{day}"', home)
         self.assertIn('property="og:image" content="https://yishilu-daily.github.io/assets/og.jpg"', home)
         self.assertIn('property="og:image:type" content="image/jpeg"', home)
         self.assertIn('property="og:image:width" content="1200"', home)
@@ -80,6 +91,7 @@ class SiteTests(unittest.TestCase):
         about = (ROOT / "about" / "index.html").read_text(encoding="utf-8")
         self.assertNotIn('href="/profile/"', about)
         self.assertNotIn("認識我", about)
+        self.assertIn("我是許欣霈（Show），在富邦人壽擔任保險業務，同時負責單位主管的工作，也是藝世錄團隊的領導者。", about)
         for post in posts:
             article = (ROOT / "column" / post["date"] / post["slug"] / "index.html").read_text(encoding="utf-8")
             self.assertIn(post["image_url"], article)
@@ -99,6 +111,7 @@ class SiteTests(unittest.TestCase):
         self.assertIn("[skip ci]", workflow)
         self.assertNotIn("cron:", workflow)
         self.assertIn("contents: write", workflow)
+        self.assertIn("daily", workflow)
         self.assertFalse((ROOT / ".github" / "workflows" / "daily-news.yml").exists())
 
     def test_fetch_candidates_prints_json_and_skips_failures(self):

@@ -691,6 +691,181 @@ article.about {
   }
 }
 
+.issue-app {
+  padding-bottom: 12px;
+}
+
+.day-switch {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  margin: 4px 0 28px;
+}
+
+.day-nav,
+.day-field input {
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+}
+
+.day-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  text-decoration: none;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.day-nav[aria-disabled="true"] {
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+.day-field {
+  display: block;
+  min-width: 0;
+}
+
+.vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.day-field input {
+  width: 100%;
+  padding: 0 12px;
+  color-scheme: light;
+}
+
+.issue-empty {
+  margin: 12px 0 28px;
+  padding: 22px 20px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink-soft);
+  line-height: 1.8;
+}
+
+.issue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin-top: 28px;
+  list-style: none;
+}
+
+.issue-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.issue-card summary {
+  display: block;
+  cursor: pointer;
+  list-style: none;
+}
+
+.issue-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.issue-media {
+  display: block;
+}
+
+.issue-media img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--bg-alt);
+}
+
+.issue-copy {
+  display: block;
+  padding: 16px 18px 8px;
+}
+
+.issue-kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.issue-no {
+  font-family: var(--serif);
+  color: var(--gold-ink);
+  font-size: 1.25rem;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.issue-title {
+  display: block;
+  font-family: var(--serif);
+  font-size: 1.35rem;
+  line-height: 1.45;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+}
+
+.issue-copy .summary {
+  display: block;
+  margin-top: 8px;
+}
+
+.hint {
+  display: block;
+  padding: 0 18px 16px;
+  color: var(--gold-ink);
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+}
+
+.hint::before {
+  content: "展開全文";
+}
+
+.issue-card[open] .hint::before {
+  content: "收合";
+}
+
+.issue-body {
+  padding: 4px 18px 22px;
+  border-top: 1px solid var(--line);
+}
+
+.issue + .issue {
+  margin-top: 8px;
+}
+
+@media (max-width: 420px) {
+  .day-nav {
+    padding: 0 10px;
+    letter-spacing: 0.02em;
+    font-size: 0.92rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .feature-card,
   .story,

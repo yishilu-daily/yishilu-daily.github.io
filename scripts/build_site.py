@@ -313,6 +313,101 @@ def absolute_image(settings: dict, image_url: str) -> str:
     return settings["site_url"] + image_url
 
 
+NUMERALS = "一二三四五六七八九十"
+
+
+def cn_index(number: int) -> str:
+    if 1 <= number <= len(NUMERALS):
+        return NUMERALS[number - 1]
+    return str(number)
+
+
+def issue_dates(posts: list[dict]) -> list[str]:
+    return sorted({post["date"] for post in posts})
+
+
+def issue_card(post: dict, index: int, *, eager: bool) -> str:
+    loading = 'fetchpriority="high"' if eager else 'loading="lazy" decoding="async"'
+    flag = ""
+    if "範例" in post["tags"]:
+        flag = '<p class="sample-flag">範例，可替換</p>'
+    credit = ""
+    if post.get("image_credit"):
+        credit = f'<span class="image-credit">{esc(post["image_credit"])}</span>'
+    permalink = f'/column/{esc(post["date"])}/{esc(post["slug"])}/'
+    return (
+        "<li>"
+        '<details class="issue-card">'
+        "<summary>"
+        '<span class="issue-media">'
+        f'<img src="{esc(post["image_url"])}" alt="" width="1200" height="675" {loading}>'
+        f"{credit}</span>"
+        '<span class="issue-copy">'
+        f'<span class="issue-kicker"><span class="issue-no">{cn_index(index)}、</span>'
+        f'<span class="tag">{esc(post["category"])}</span></span>'
+        f'<span class="issue-title">{esc(post["title"])}</span>'
+        f'<span class="summary">{esc(post["summary"])}</span>'
+        f"{flag}</span>"
+        '<span class="hint"></span>'
+        "</summary>"
+        '<div class="issue-body">'
+        f'<div class="prose">{post["html"]}</div>'
+        '<section class="source-box"><h2>新聞來源</h2>'
+        f'<p><a href="{esc(post["source_url"])}" target="_blank" rel="noopener noreferrer">{esc(post["source_name"])}</a></p>'
+        "</section>"
+        f'<p class="share-row"><a href="{permalink}">開啟這篇的獨立頁面</a></p>'
+        "</div></details></li>"
+    )
+
+
+def render_issues(posts: list[dict]) -> str:
+    if not posts:
+        return (
+            '<div class="issue-app" data-issue-app data-dates="[]" data-latest="">'
+            '<p class="eyebrow">Daily Column</p><h1>藝世錄金融理財日報</h1>'
+            '<p class="lead">還沒有文章。新的一篇放進 posts/ 之後就會出現在這裡。</p></div>'
+        )
+    grouped: dict[str, list[dict]] = {}
+    for post in posts:
+        grouped.setdefault(post["date"], []).append(post)
+    dates = sorted(grouped)
+    latest = dates[-1]
+    sections = []
+    for day in dates:
+        chosen = sorted(grouped[day], key=lambda post: post["order"])
+        cards = "".join(
+            issue_card(post, index, eager=day == latest and index == 1)
+            for index, post in enumerate(chosen, start=1)
+        )
+        hidden = "" if day == latest else " hidden"
+        sections.append(
+            f'<section class="issue" data-issue="{esc(day)}"{hidden}>'
+            '<p class="eyebrow">Daily Column</p>'
+            f"<h1>{esc(format_date(day))}</h1>"
+            f'<p class="edition-meta">{weekday_label(day)} · {len(chosen)} 篇</p>'
+            f'<ol class="issue-list">{cards}</ol></section>'
+        )
+    prev_day = dates[-2] if len(dates) > 1 else ""
+    if prev_day:
+        prev_html = f'<a class="day-nav" data-issue-prev href="/daily/?d={esc(prev_day)}">前一天</a>'
+    else:
+        prev_html = '<a class="day-nav" data-issue-prev aria-disabled="true">前一天</a>'
+    next_html = '<a class="day-nav" data-issue-next aria-disabled="true">後一天</a>'
+    dates_attr = esc(json.dumps(dates, ensure_ascii=False))
+    return (
+        f'<div class="issue-app" data-issue-app data-dates="{dates_attr}" data-latest="{esc(latest)}">'
+        '<form class="day-switch" action="/daily/" method="get">'
+        f"{prev_html}"
+        '<label class="day-field">'
+        f'<input data-issue-date id="issue-date" type="date" name="d" min="{esc(dates[0])}" max="{esc(latest)}" value="{esc(latest)}" aria-label="選擇日期" required>'
+        "</label>"
+        f"{next_html}</form>"
+        '<p class="issue-empty" data-issue-empty hidden><span data-empty-label></span>這一天還沒有專欄。用前一天或後一天，跳到最近有文章的日子。</p>'
+        + "".join(sections)
+        + '<script src="/assets/daily.js?v=2" defer></script></div>'
+    )
+
+
 def card(post: dict, *, eager: bool) -> str:
     loading = 'fetchpriority="high"' if eager else 'loading="lazy" decoding="async"'
     flag = ""
@@ -336,44 +431,8 @@ def card(post: dict, *, eager: bool) -> str:
 
 
 def render_home(posts: list[dict], about_html: str) -> str:
-    if not posts:
-        return (
-            '<article class="day-lead"><p class="eyebrow">Daily Column</p>'
-            '<p class="kicker">專欄</p>'
-            "<h1>藝世錄金融理財日報</h1>"
-            '<p class="lead">還沒有文章。新的一篇放進 posts/ 之後就會出現在這裡。</p></article>'
-        )
-    latest = posts[0]["date"]
-    today = [post for post in posts if post["date"] == latest]
-    today.sort(key=lambda post: post["order"])
-    cards = "".join(card(post, eager=index == 0) for index, post in enumerate(today))
-    older_dates = []
-    for post in posts:
-        if post["date"] != latest and post["date"] not in older_dates:
-            older_dates.append(post["date"])
-    recent = ""
-    if older_dates:
-        rows = []
-        for day in older_dates:
-            count = sum(1 for post in posts if post["date"] == day)
-            rows.append(
-                f'<li><a href="/archive/{esc(day)}/"><time datetime="{esc(day)}">{esc(format_date(day))}</time>'
-                f'<span>{weekday_label(day)} · {count} 篇</span></a></li>'
-            )
-        recent = '<section class="recent"><p class="eyebrow">Earlier</p><h2>近期</h2><ol class="archive-list">' + "".join(rows) + "</ol></section>"
-    about = ""
-    if about_html:
-        about = f'<section class="about" id="about"><p class="eyebrow">About</p><h2>關於 藝世錄</h2><div class="prose">{about_html}</div></section>'
-    return (
-        '<article class="day-lead">'
-        '<p class="eyebrow">Daily Column</p>'
-        "<h1>今天的專欄</h1>"
-        f'<p class="edition-meta">{esc(format_date(latest))} · {weekday_label(latest)}</p>'
-        '<p class="lead">挑幾則和保險、理財有關的新聞，用我的話寫給你看。</p>'
-        f'<div class="feature-list">{cards}</div>'
-        "</article>"
-        f"{recent}{about}"
-    )
+    del about_html
+    return render_issues(posts)
 
 
 def render_article(post: dict) -> str:
@@ -411,7 +470,7 @@ def render_archive(posts: list[dict]) -> str:
     for day in dates:
         count = sum(1 for post in posts if post["date"] == day)
         rows.append(
-            f'<li><a href="/archive/{esc(day)}/"><time datetime="{esc(day)}">{esc(format_date(day))}</time>'
+            f'<li><a href="/daily/?d={esc(day)}"><time datetime="{esc(day)}">{esc(format_date(day))}</time>'
             f'<span>{weekday_label(day)} · {count} 篇</span></a></li>'
         )
     body = "".join(rows) or '<p class="empty">還沒有文章。</p>'
@@ -430,11 +489,11 @@ def render_day(day: str, posts: list[dict]) -> str:
     index = dates.index(day)
     links = []
     if index > 0:
-        links.append(f'<a href="/archive/{dates[index - 1]}/">前一天</a>')
+        links.append(f'<a href="/daily/?d={dates[index - 1]}">前一天</a>')
     else:
         links.append("<span></span>")
     if index < len(dates) - 1:
-        links.append(f'<a href="/archive/{dates[index + 1]}/">後一天</a>')
+        links.append(f'<a href="/daily/?d={dates[index + 1]}">後一天</a>')
     else:
         links.append("<span></span>")
     return (
@@ -527,6 +586,20 @@ def build(root: Path) -> list[dict]:
             current="TODAY",
         ),
     )
+    write_text(
+        root / "daily" / "index.html",
+        page(
+            template,
+            settings,
+            title=f"每日專欄｜{settings['site_name']}",
+            og_title=settings["site_name"],
+            description=site_description,
+            canonical=site + "/daily/",
+            image=brand_image,
+            main=render_issues(posts),
+            current="TODAY",
+        ),
+    )
     remove_stale(root, posts)
     for day in sorted({post["date"] for post in posts}):
         write_text(
@@ -584,7 +657,7 @@ def build(root: Path) -> list[dict]:
             current="ABOUT",
         ),
     )
-    urls = [site + "/", site + "/archive/", site + "/about/"]
+    urls = [site + "/", site + "/daily/", site + "/archive/", site + "/about/"]
     urls.extend(f"{site}/archive/{day}/" for day in sorted({post["date"] for post in posts}))
     urls.extend(f"{site}/column/{post['date']}/{post['slug']}/" for post in posts)
     lines = [
