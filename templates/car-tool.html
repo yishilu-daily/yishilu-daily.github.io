@@ -1,9 +1,3 @@
-<header class="tool-hero">
-  <p class="eyebrow">Tools</p>
-  <h1>藝世錄</h1>
-  <p class="lead">車損折舊與民事求償整合工具</p>
-</header>
-
 <nav class="tabs" aria-label="工具分頁">
   <button type="button" class="tab active" data-tab="damage">車損折舊</button>
   <button type="button" class="tab" data-tab="claim">民事求償</button>
@@ -11,7 +5,7 @@
 
 <section id="damage" class="panel active">
   <div class="card">
-    <h2>車損折舊試算</h2>
+    <header class="tool-panel-head"><h2>車損折舊試算</h2><span class="brief-asof">〔試算〕</span></header>
     <div id="damageError" class="error" hidden></div>
 
     <div class="field">
@@ -70,7 +64,7 @@
   </div>
 
   <div class="card">
-    <h2>車損試算結果</h2>
+    <header class="tool-panel-head"><h2>車損試算結果</h2><span class="brief-asof">〔結果〕</span></header>
     <div class="row"><span>車輛使用期間</span><strong id="dAge">—</strong></div>
     <div class="row"><span>年折舊率</span><strong id="dRate">—</strong></div>
     <div class="row"><span>零件原估價</span><strong id="dParts">—</strong></div>
@@ -86,7 +80,7 @@
 
 <section id="claim" class="panel">
   <div class="card">
-    <h2>車禍民事求償清單</h2>
+    <header class="tool-panel-head"><h2>車禍民事求償清單</h2><span class="brief-asof">〔清單〕</span></header>
     <p class="intro">依你手上的診斷書、收據、估價單與其他資料，填入已發生或打算主張的金額。</p>
 
     <div class="field">
@@ -157,7 +151,7 @@
   </div>
 
   <div class="card">
-    <h2>加總結果</h2>
+    <header class="tool-panel-head"><h2>加總結果</h2><span class="brief-asof">〔合計〕</span></header>
     <div class="row"><span>合計民事損害賠償請求金額</span><strong id="cTotal">NT$ 0</strong></div>
     <div class="row"><span>依對方肇責比例後參考金額</span><strong id="cFaulted">NT$ 0</strong></div>
     <div class="row"><span>已領理賠／補償金額</span><strong id="cPaid">NT$ 0</strong></div>

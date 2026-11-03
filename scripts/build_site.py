@@ -736,6 +736,22 @@ def render_home(posts: list[dict], about_html: str) -> str:
     return render_issues(posts)
 
 
+def family_shell(title: str, body: str, *, pager: str = "") -> str:
+    label = pager or title
+    return (
+        '<section class="family-card">'
+        '<header class="family-head">'
+        '<div class="family-brand">'
+        '<span class="brief-logo"><img src="/assets/logo.png" alt="" width="64" height="64"></span>'
+        f"<h1>{esc(title)}</h1></div>"
+        '<p class="brief-rule" aria-hidden="true"><span></span></p></header>'
+        f'<div class="family-body">{body}</div>'
+        '<footer class="brief-foot">'
+        '<p class="brief-disclaimer">※本報資訊僅供參考，不構成投資建議</p>'
+        f'<p class="brief-pager">{esc(label)}</p></footer></section>'
+    )
+
+
 def render_article(post: dict) -> str:
     flag = ""
     if "範例" in post["tags"]:
@@ -748,18 +764,20 @@ def render_article(post: dict) -> str:
         f'<img class="article-cover" src="{esc(post["image_url"])}" alt="{esc(post["title"])}" width="1200" height="675">'
         f"{credit}</figure>"
     )
-    return (
-        "<article>"
+    tag = bracket(f'{post["source_name"]} {short_md(post["date"])}'.strip())
+    inner = (
+        '<section class="brief-card">'
+        f'<header><h3>{brief_icon("news")}{esc(post["category"])}</h3>'
+        f'<span class="brief-asof">{esc(tag)}</span></header>'
         f"{figure}"
-        '<p class="eyebrow">Column</p>'
-        f'<p class="tag">{esc(post["category"])}</p>'
-        f'<h1>{esc(post["title"])}</h1>'
+        f'<h2 class="family-article-title">{esc(post["title"])}</h2>'
         f'<p class="edition-meta"><time datetime="{esc(post["date"])}">{esc(format_date(post["date"]))}</time> · {weekday_label(post["date"])}</p>'
-        f"{flag}<div class=\"prose\">{post['html']}</div>"
+        f'{flag}<div class="prose">{post["html"]}</div>'
         '<section class="source-box"><h2>新聞來源</h2>'
         f'<p><a href="{esc(post["source_url"])}" target="_blank" rel="noopener noreferrer">{esc(post["source_name"])}</a></p>'
-        "</section></article>"
+        "</section></section>"
     )
+    return family_shell("藝世錄專欄", inner, pager=format_date(post["date"]))
 
 
 def render_archive(posts: list[dict]) -> str:
@@ -767,25 +785,24 @@ def render_archive(posts: list[dict]) -> str:
     for post in posts:
         if post["date"] not in dates:
             dates.append(post["date"])
-    rows = []
+    panels = []
     for day in dates:
-        count = sum(1 for post in posts if post["date"] == day)
-        rows.append(
-            f'<li><a href="/daily/?d={esc(day)}"><time datetime="{esc(day)}">{esc(format_date(day))}</time>'
-            f'<span>{weekday_label(day)} · {count} 篇</span></a></li>'
+        chosen = sorted((post for post in posts if post["date"] == day), key=lambda post: post["order"])
+        rows_html = "".join(brief_story(post, index, eager=False) for index, post in enumerate(chosen, start=1))
+        tag = bracket(f"{weekday_label(day)} · {len(chosen)} 篇")
+        panels.append(
+            '<section class="brief-card">'
+            f'<header><h3>{brief_icon("news")}{esc(format_date(day))}</h3>'
+            f'<span class="brief-asof">{esc(tag)}</span></header>'
+            f'<ol class="brief-stories">{rows_html}</ol></section>'
         )
-    body = "".join(rows) or '<p class="empty">還沒有文章。</p>'
-    return (
-        '<article class="archive-block"><p class="eyebrow">Archive</p><h1>專欄彙整</h1>'
-        '<p class="lead">每一天的文章都留在這裡。</p>'
-        f'<ol class="archive-list">{body}</ol></article>'
-    )
+    body = "".join(panels) or '<p class="empty">還沒有文章。</p>'
+    return family_shell("藝世錄文章彙整", body)
 
 
 def render_day(day: str, posts: list[dict]) -> str:
     chosen = [post for post in posts if post["date"] == day]
     chosen.sort(key=lambda post: post["order"])
-    cards = "".join(card(post, eager=index == 0) for index, post in enumerate(chosen))
     dates = sorted({post["date"] for post in posts})
     index = dates.index(day)
     links = []
@@ -797,22 +814,27 @@ def render_day(day: str, posts: list[dict]) -> str:
         links.append(f'<a href="/daily/?d={dates[index + 1]}">後一天</a>')
     else:
         links.append("<span></span>")
-    return (
-        '<article class="day-lead">'
-        '<p class="eyebrow">Daily Column</p>'
-        f'<p class="kicker">當日專欄</p><h1>{esc(format_date(day))}</h1>'
-        f'<p class="edition-meta">{weekday_label(day)} · {len(chosen)} 篇</p>'
-        f'<div class="feature-list">{cards}</div>'
-        f'<p class="pager">{"".join(links)}</p></article>'
+    rows_html = "".join(brief_story(post, index, eager=index == 1) for index, post in enumerate(chosen, start=1))
+    tag = bracket(f"{weekday_label(day)} · {len(chosen)} 篇")
+    panel = (
+        '<section class="brief-card">'
+        f'<header><h3>{brief_icon("news")}{esc(format_date(day))}</h3>'
+        f'<span class="brief-asof">{esc(tag)}</span></header>'
+        f'<ol class="brief-stories">{rows_html}</ol></section>'
+        f'<p class="pager">{"".join(links)}</p>'
     )
+    return family_shell("藝世錄文章彙整", panel, pager=format_date(day))
 
 
 def render_about(about_html: str) -> str:
-    return (
-        '<article class="about"><p class="eyebrow">About</p><h1>關於 藝世錄</h1>'
-        f'<div class="prose">{about_html}</div>'
-        '<p class="share-row"><a href="/">回到今天的專欄</a></p></article>'
+    panel = (
+        '<section class="brief-card">'
+        f'<header><h3>{brief_icon("shield")}關於</h3>'
+        '<span class="brief-asof">〔團隊長〕</span></header>'
+        f'<div class="prose family-prose">{about_html}</div>'
+        '<p class="share-row"><a href="/">回到今天的專欄</a></p></section>'
     )
+    return family_shell("關於藝世錄", panel)
 
 
 def write_text(path: Path, text: str) -> None:
@@ -918,6 +940,7 @@ def build(root: Path) -> list[dict]:
                 image=share_images[min((post for post in posts if post["date"] == day), key=lambda post: post["order"])["slug"]],
                 main=render_day(day, posts),
                 current="ARCHIVE",
+                body_class="sheet-page",
             ),
         )
     for post in posts:
@@ -934,6 +957,7 @@ def build(root: Path) -> list[dict]:
                 main=render_article(post),
                 current="",
                 og_type="article",
+                body_class="sheet-page",
             ),
         )
     write_text(
@@ -947,6 +971,7 @@ def build(root: Path) -> list[dict]:
             image=brand_image,
             main=render_archive(posts),
             current="ARCHIVE",
+            body_class="sheet-page",
         ),
     )
     tool_main = (root / "templates" / "car-tool.html").read_text(encoding="utf-8")
@@ -960,8 +985,9 @@ def build(root: Path) -> list[dict]:
             description="車損折舊與民事求償整合工具",
             canonical=site + "/tools/car-accident/",
             image=brand_image,
-            main=tool_main,
+            main=family_shell("藝世錄車禍工具", tool_main),
             current="TOOLS",
+            body_class="sheet-page",
         ),
     )
     write_text(
@@ -975,6 +1001,7 @@ def build(root: Path) -> list[dict]:
             image=brand_image,
             main=render_about(about_html),
             current="ABOUT",
+            body_class="sheet-page",
         ),
     )
     urls = [site + "/", site + "/daily/", site + "/archive/", site + "/about/", site + "/tools/car-accident/"]
