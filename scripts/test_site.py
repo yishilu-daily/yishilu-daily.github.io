@@ -84,6 +84,24 @@ class SiteTests(unittest.TestCase):
             self.assertIn("44,920.14", home)
             self.assertIn("工商時報", home)
             self.assertIn("11/3", home)
+            self.assertIn("理財話題", home)
+            self.assertNotIn("今日激勵", home)
+            self.assertNotIn("台股連日震盪", home)
+            self.assertNotIn("油價會跌", home)
+            nov3 = home.split('data-issue="2026-11-03"', 1)[1]
+            page3 = nov3.split('data-brief-page="2"', 1)[1].split('class="brief-disclaimer"', 1)[0]
+            self.assertIn("理財話題", page3)
+            self.assertIn("保險新聞", page3)
+            self.assertNotIn("財經新聞", page3)
+            self.assertEqual(page3.count('class="issue-card"'), 6)
+            self.assertEqual(nov3.count('class="issue-card"'), 6)
+            self.assertIn("示意圖（AI 生成）", page3)
+            self.assertIn("經濟日報 · 2026年11月3日", page3)
+            oct28 = home.split('data-issue="2026-10-28"', 1)[1].split('data-issue="', 1)[0]
+            self.assertNotIn("藝世錄財金晨報", oct28)
+            self.assertNotIn("理財話題", oct28)
+            self.assertNotIn("財經新聞", oct28)
+            self.assertGreater(oct28.count('class="issue-card"'), 0)
         self.assertIn('property="og:image" content="https://yishilu-daily.github.io/assets/og.jpg"', home)
         self.assertIn('property="og:image:type" content="image/jpeg"', home)
         self.assertIn('property="og:image:width" content="1200"', home)
@@ -134,24 +152,38 @@ class SiteTests(unittest.TestCase):
             "tw": {"name": "加權指數", "value": "1.00", "direction": "up", "change": "1.00", "pct": "+0.01%", "commentary": "範例說明"},
             "us": {"rows": [{"name": "道瓊", "value": "1.00", "direction": "down", "change": "1.00", "pct": "-0.01%"}]},
             "focus": ["焦點範例"],
+            "topics": [{"text": "這則不該出現", "source": "不該來源", "date": "11/9"}],
+            "insurance": [{"text": "保險短訊不該出現"}],
             "motivation": "加油",
         }
-        html = build_site.render_briefing(sample)
+        finance = {"title": "財經", "category": "稅務", "group": "finance", "order": 1, "tags": [], "image_url": "/a.webp", "image_credit": "示意圖（AI 生成）", "summary": "摘要", "html": "<p>內文</p>", "source_name": "中央社", "source_url": "https://example.com/a", "date": "2026-11-04", "slug": "01-a"}
+        insurance = dict(finance, title="保險", group="insurance", order=2, slug="02-b", source_url="https://example.com/b", source_name="經濟日報")
+        plain = dict(finance, title="舊文", group="", category="理財投資", order=1, slug="01-old", date="2026-10-28")
+        html = build_site.render_briefing(sample, [finance, insurance, plain])
         self.assertIn("藝世錄財金晨報", html)
         self.assertIn("brief-up", html)
         self.assertIn("brief-down", html)
         self.assertIn("1/3", html)
+        self.assertIn("3/3", html)
+        self.assertIn("理財話題", html)
+        self.assertIn("保險新聞", html)
+        self.assertIn("示意圖（AI 生成）", html)
+        self.assertIn("中央社 · 2026年11月4日", html)
+        self.assertNotIn("這則不該出現", html)
+        self.assertNotIn("保險短訊不該出現", html)
+        self.assertNotIn("今日激勵", html)
+        self.assertNotIn("加油", html)
+        self.assertNotIn("舊文", html)
         self.assertNotIn("昶勝軍", html)
-        finance = {"title": "財經", "category": "稅務", "group": "finance", "order": 1, "tags": [], "image_url": "/a.webp", "image_credit": "", "summary": "摘要", "html": "<p>內文</p>", "source_name": "中央社", "source_url": "https://example.com/a", "date": "2026-11-04", "slug": "01-a"}
-        insurance = dict(finance, title="保險", group="insurance", order=2, slug="02-b", source_url="https://example.com/b")
-        plain = dict(finance, title="舊文", group="", category="理財投資", order=1, slug="01-old", date="2026-10-28")
         grouped = build_site.render_issue_groups([finance, insurance], latest=False)
-        self.assertIn("財經新聞", grouped)
-        self.assertIn("保險新聞", grouped)
+        self.assertNotIn("財經新聞", grouped)
+        self.assertNotIn("理財話題", grouped)
+        self.assertNotIn("保險新聞", grouped)
         self.assertEqual(grouped.count('class="issue-no"'), 2)
         self.assertIn(">1</span>", grouped)
         default = build_site.render_issue_groups([plain, dict(plain, title="第二篇", order=2)], latest=False)
         self.assertNotIn("財經新聞", default)
+        self.assertNotIn("理財話題", default)
         self.assertNotIn("保險新聞", default)
         self.assertIn(">2</span>", default)
 

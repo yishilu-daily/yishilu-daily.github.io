@@ -354,6 +354,7 @@ def issue_card(post: dict, index: int, *, eager: bool) -> str:
         + "</span>"
         f'<span class="issue-title">{esc(post["title"])}</span>'
         f'<span class="summary">{esc(post["summary"])}</span>'
+        f'<span class="issue-source">{esc(post["source_name"])} · {esc(format_date(post["date"]))}</span>'
         f"{flag}</span>"
         '<span class="hint"></span>'
         "</summary>"
@@ -464,7 +465,7 @@ def numbered_block(title: str, items: list) -> str:
     return f'<section class="brief-card"><h3>{esc(title)}</h3><ol class="brief-points">{"".join(rows)}</ol></section>'
 
 
-def render_briefing(data: dict | None) -> str:
+def render_briefing(data: dict | None, posts: list[dict] | None = None) -> str:
     if not data:
         return ""
     day = str(data.get("date") or "")
@@ -498,16 +499,13 @@ def render_briefing(data: dict | None) -> str:
             numbered_block("財經焦點", data.get("focus") or []),
         ]
     )
-    page3 = "".join(
-        [
-            numbered_block("理財話題", data.get("topics") or []),
-            numbered_block("保險新聞", data.get("insurance") or []),
-            f'<section class="brief-card brief-motivate"><h3>今日激勵</h3><p>{esc(str(data.get("motivation") or ""))}</p></section>'
-            if str(data.get("motivation") or "").strip()
-            else "",
-        ]
+    page3 = render_post_groups(
+        posts or [],
+        latest=False,
+        titles={"finance": "理財話題", "insurance": "保險新聞"},
+        include_default=False,
     )
-    pages = [page for page in (page1, page2, page3) if page.strip()]
+    pages = [page1, page2, page3]
     if not pages:
         return ""
     tabs = "".join(
@@ -529,23 +527,24 @@ def render_briefing(data: dict | None) -> str:
     )
 
 
-def render_issue_groups(posts: list[dict], *, latest: bool) -> str:
+def render_post_groups(posts: list[dict], *, latest: bool, titles: dict[str, str] | None = None, include_default: bool = True) -> str:
     buckets: dict[str, list[dict]] = {"finance": [], "insurance": [], "": []}
     for post in posts:
         buckets[post_group(post)].append(post)
-    classified = bool(buckets["finance"] or buckets["insurance"])
+    if titles is None:
+        cards = []
+        for index, post in enumerate(posts, start=1):
+            cards.append(issue_card(post, index, eager=latest and index == 1))
+        return f'<ol class="issue-list">{"".join(cards)}</ol>'
     parts: list[str] = []
     eager_used = False
-    for key in ("finance", "insurance", ""):
+    keys = ["finance", "insurance"] + ([""] if include_default else [])
+    for key in keys:
         chosen = buckets[key]
         if not chosen:
             continue
-        if key == "" and not classified:
-            heading = ""
-        elif key == "":
-            heading = '<h2 class="issue-group">其他</h2>'
-        else:
-            heading = f'<h2 class="issue-group">{GROUP_TITLES[key]}</h2>'
+        label = titles.get(key) or ""
+        heading = f'<h2 class="issue-group">{esc(label)}</h2>' if label else ""
         cards = []
         for index, post in enumerate(chosen, start=1):
             eager = latest and not eager_used
@@ -553,6 +552,10 @@ def render_issue_groups(posts: list[dict], *, latest: bool) -> str:
             cards.append(issue_card(post, index, eager=eager))
         parts.append(f'{heading}<ol class="issue-list">{"".join(cards)}</ol>')
     return "".join(parts)
+
+
+def render_issue_groups(posts: list[dict], *, latest: bool) -> str:
+    return render_post_groups(posts, latest=latest, titles=None)
 
 
 def render_issues(posts: list[dict]) -> str:
@@ -570,15 +573,18 @@ def render_issues(posts: list[dict]) -> str:
     sections = []
     for day in dates:
         chosen = sorted(grouped[day], key=lambda post: post["order"])
-        groups = render_issue_groups(chosen, latest=day == latest)
-        briefing = render_briefing(load_briefing(ROOT, day))
+        briefing_data = load_briefing(ROOT, day)
+        if briefing_data:
+            body = render_briefing(briefing_data, chosen)
+        else:
+            body = render_issue_groups(chosen, latest=day == latest)
         hidden = "" if day == latest else " hidden"
         sections.append(
             f'<section class="issue" data-issue="{esc(day)}"{hidden}>'
             '<p class="eyebrow">Daily Column</p>'
             f"<h1>{esc(format_date(day))}</h1>"
             f'<p class="edition-meta">{weekday_label(day)} · {len(chosen)} 篇</p>'
-            f"{briefing}{groups}</section>"
+            f"{body}</section>"
         )
     prev_day = dates[-2] if len(dates) > 1 else ""
     if prev_day:

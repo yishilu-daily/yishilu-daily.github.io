@@ -834,6 +834,14 @@ article.about {
   margin-top: 8px;
 }
 
+.issue-source {
+  display: block;
+  margin-top: 10px;
+  color: var(--faint);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+}
+
 .hint {
   display: block;
   padding: 0 18px 16px;
