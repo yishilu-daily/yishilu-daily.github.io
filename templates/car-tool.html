@@ -1,0 +1,181 @@
+<header class="tool-hero">
+  <p class="eyebrow">Tools</p>
+  <h1>藝世錄</h1>
+  <p class="lead">車損折舊與民事求償整合工具</p>
+</header>
+
+<nav class="tabs" aria-label="工具分頁">
+  <button type="button" class="tab active" data-tab="damage">車損折舊</button>
+  <button type="button" class="tab" data-tab="claim">民事求償</button>
+</nav>
+
+<section id="damage" class="panel active">
+  <div class="card">
+    <h2>車損折舊試算</h2>
+    <div id="damageError" class="error" hidden></div>
+
+    <div class="field">
+      <label for="vehicle">車輛種類</label>
+      <select id="vehicle">
+        <option value="">請選擇</option>
+        <option value="car">汽車</option>
+        <option value="moto">機車</option>
+      </select>
+    </div>
+
+    <div class="two">
+      <div class="field">
+        <label for="firstDate">第一次領牌日期</label>
+        <input id="firstDate" type="date">
+      </div>
+      <div class="field">
+        <label for="accDate">事故日期</label>
+        <input id="accDate" type="date">
+      </div>
+    </div>
+
+    <div class="two">
+      <div class="field">
+        <label for="parts">零件／材料費</label>
+        <input id="parts" type="number" inputmode="decimal" min="0" placeholder="例如 30000">
+      </div>
+      <div class="field">
+        <label for="labor">維修工資</label>
+        <input id="labor" type="number" inputmode="decimal" min="0" value="0" placeholder="例如 8000">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="damageFault">對方肇責比例</label>
+      <div class="fault-grid">
+        <button type="button" class="fault-btn" data-target="damageFault" data-fault="100">100%</button>
+        <button type="button" class="fault-btn" data-target="damageFault" data-fault="90">90%</button>
+        <button type="button" class="fault-btn" data-target="damageFault" data-fault="80">80%</button>
+        <button type="button" class="fault-btn" data-target="damageFault" data-fault="70">70%</button>
+        <button type="button" class="fault-btn" data-target="damageFault" data-fault="60">60%</button>
+        <button type="button" class="fault-btn" data-target="damageFault" data-fault="50">50%</button>
+        <button type="button" class="fault-btn" data-target="damageFault" data-fault="40">40%</button>
+        <button type="button" class="fault-btn" data-target="damageFault" data-fault="30">30%</button>
+        <button type="button" class="fault-btn" data-target="damageFault" data-fault="20">20%</button>
+        <button type="button" class="fault-btn" data-target="damageFault" data-fault="10">10%</button>
+        <button type="button" class="fault-btn" data-target="damageFault" data-fault="0">0%</button>
+      </div>
+      <div class="manual"><span>自訂</span><input id="damageFault" type="number" min="0" max="100" value="100"><span>%</span></div>
+    </div>
+
+    <div class="actions">
+      <button id="calcDamage" class="primary" type="button">開始試算</button>
+      <button id="clearDamage" class="secondary" type="button">清除</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>車損試算結果</h2>
+    <div class="row"><span>車輛使用期間</span><strong id="dAge">—</strong></div>
+    <div class="row"><span>年折舊率</span><strong id="dRate">—</strong></div>
+    <div class="row"><span>零件原估價</span><strong id="dParts">—</strong></div>
+    <div class="row"><span>零件折舊金額</span><strong id="dDep">—</strong></div>
+    <div class="row"><span>折舊後零件</span><strong id="dAfter">—</strong></div>
+    <div class="row"><span>維修工資</span><strong id="dLabor">—</strong></div>
+    <div class="row"><span>修車費用參考總額</span><strong id="dGross">—</strong></div>
+    <div class="row"><span>依肇責參考金額</span><strong id="dClaim">—</strong></div>
+    <button id="sendToClaim" class="primary full topgap" type="button" disabled>帶入民事求償清單</button>
+    <p class="note">汽車採 5 年耐用年數，年折舊率 36.9%。機車採 3 年耐用年數，年折舊率 53.6%。零件最低保留原價 10%。維修工資不折舊。</p>
+  </div>
+</section>
+
+<section id="claim" class="panel">
+  <div class="card">
+    <h2>車禍民事求償清單</h2>
+    <p class="intro">依你手上的診斷書、收據、估價單與其他資料，填入已發生或打算主張的金額。</p>
+
+    <div class="field">
+      <label for="medical">醫療費用，已發生</label>
+      <small>掛號、部分負擔、自費檢查、復健等。</small>
+      <input class="claim-input" id="medical" type="number" inputmode="decimal" min="0" value="0">
+    </div>
+
+    <div class="field">
+      <label for="futureMedical">未來必要醫療及復健費</label>
+      <small>依醫師叮嚀，後續回診、復健或手術費用。</small>
+      <input class="claim-input" id="futureMedical" type="number" inputmode="decimal" min="0" value="0">
+    </div>
+
+    <div class="field">
+      <label for="lostIncome">工作損失，誤工費</label>
+      <small>例如日薪乘以休養天數。</small>
+      <input class="claim-input" id="lostIncome" type="number" inputmode="decimal" min="0" value="0">
+    </div>
+
+    <div class="field">
+      <label for="care">看護費</label>
+      <small>家屬看護或外聘看護支出。</small>
+      <input class="claim-input" id="care" type="number" inputmode="decimal" min="0" value="0">
+    </div>
+
+    <div class="field">
+      <label for="transport">交通費及其他必要支出</label>
+      <small>就醫交通、油錢、停車費、護具等。</small>
+      <input class="claim-input" id="transport" type="number" inputmode="decimal" min="0" value="0">
+    </div>
+
+    <div class="field">
+      <label for="property">車輛及其他財產損失</label>
+      <small>修車費、折舊、拖吊、停車、物品損壞等。</small>
+      <input class="claim-input" id="property" type="number" inputmode="decimal" min="0" value="0">
+    </div>
+
+    <div class="field">
+      <label for="solatium">精神慰撫金，人身損害</label>
+      <small>填入你打算主張的金額。</small>
+      <input class="claim-input" id="solatium" type="number" inputmode="decimal" min="0" value="0">
+    </div>
+
+    <div class="field">
+      <label for="paid">目前已領理賠／補償金額</label>
+      <small>強制險、對方保險公司給付、私下和解金等。</small>
+      <input class="claim-input" id="paid" type="number" inputmode="decimal" min="0" value="0">
+    </div>
+
+    <div class="field">
+      <label for="claimFault">對方肇責比例</label>
+      <div class="fault-grid">
+        <button type="button" class="fault-btn" data-target="claimFault" data-fault="100">100%</button>
+        <button type="button" class="fault-btn" data-target="claimFault" data-fault="90">90%</button>
+        <button type="button" class="fault-btn" data-target="claimFault" data-fault="80">80%</button>
+        <button type="button" class="fault-btn" data-target="claimFault" data-fault="70">70%</button>
+        <button type="button" class="fault-btn" data-target="claimFault" data-fault="60">60%</button>
+        <button type="button" class="fault-btn" data-target="claimFault" data-fault="50">50%</button>
+        <button type="button" class="fault-btn" data-target="claimFault" data-fault="40">40%</button>
+        <button type="button" class="fault-btn" data-target="claimFault" data-fault="30">30%</button>
+        <button type="button" class="fault-btn" data-target="claimFault" data-fault="20">20%</button>
+        <button type="button" class="fault-btn" data-target="claimFault" data-fault="10">10%</button>
+        <button type="button" class="fault-btn" data-target="claimFault" data-fault="0">0%</button>
+      </div>
+      <div class="manual"><span>自訂</span><input id="claimFault" type="number" min="0" max="100" value="100"><span>%</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>加總結果</h2>
+    <div class="row"><span>合計民事損害賠償請求金額</span><strong id="cTotal">NT$ 0</strong></div>
+    <div class="row"><span>依對方肇責比例後參考金額</span><strong id="cFaulted">NT$ 0</strong></div>
+    <div class="row"><span>已領理賠／補償金額</span><strong id="cPaid">NT$ 0</strong></div>
+    <div class="claimbox">
+      <span>目前尚未獲賠參考金額</span>
+      <strong id="cRemaining">NT$ 0</strong>
+    </div>
+
+    <h3>車禍民事損害賠償請求項目一覽表</h3>
+    <div id="claimTable"></div>
+
+    <div class="actions topgap">
+      <button id="copyClaim" class="secondary" type="button">複製清單</button>
+      <button id="printClaim" class="secondary" type="button">列印／存 PDF</button>
+      <button id="clearClaim" class="secondary" type="button">清除</button>
+    </div>
+
+    <p class="note">求償清單的項目與原始加總邏輯依參考頁面重建。肇責比例後參考金額為藝世錄新增功能，用於協商前快速試算。</p>
+  </div>
+</section>
+<script src="/tools/car-accident/app.js"></script>

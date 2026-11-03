@@ -134,6 +134,7 @@ img {
 
 .nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   margin-left: -8px;
 }
@@ -863,6 +864,281 @@ article.about {
     padding: 0 10px;
     letter-spacing: 0.02em;
     font-size: 0.92rem;
+  }
+}
+
+.tool-hero {
+  margin-bottom: 22px;
+}
+
+.tool-hero h1 {
+  font-size: clamp(2rem, 6vw, 2.6rem);
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.tab {
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  letter-spacing: 0.08em;
+}
+
+.tab.active {
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
+}
+
+.panel {
+  display: none;
+}
+
+.panel.active {
+  display: block;
+}
+
+.tool-hero + .tabs + .panel .card,
+.panel .card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px 18px 18px;
+  margin-bottom: 16px;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.field small,
+.intro,
+.note {
+  display: block;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.7;
+  margin-bottom: 8px;
+}
+
+.note {
+  margin-top: 14px;
+  margin-bottom: 0;
+}
+
+.field input,
+.field select,
+.manual input {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-mid);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  color-scheme: light;
+}
+
+.two {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.fault-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.fault-btn {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+}
+
+.fault-btn.active {
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
+}
+
+.manual {
+  display: grid;
+  grid-template-columns: auto minmax(0, 96px) auto;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+}
+
+.manual input {
+  text-align: center;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.primary,
+.secondary {
+  min-height: 48px;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font: inherit;
+  letter-spacing: 0.06em;
+}
+
+.primary {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.primary:disabled {
+  opacity: 0.4;
+}
+
+.secondary {
+  background: var(--bg-alt);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.full {
+  width: 100%;
+}
+
+.topgap {
+  margin-top: 14px;
+}
+
+.error {
+  background: #fff7f4;
+  border: 1px solid #e7c7b8;
+  color: #7a3b2e;
+  padding: 10px 12px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.row span {
+  color: var(--muted);
+}
+
+.row strong {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.claimbox {
+  background: var(--bg-alt);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 14px;
+}
+
+.claimbox span {
+  font-weight: 600;
+}
+
+.claimbox strong {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--serif);
+  font-size: 1.7rem;
+  color: var(--ink);
+}
+
+.claim-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.claim-table th,
+.claim-table td {
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.claim-table td:last-child,
+.claim-table th:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 640px) {
+  .two {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .fault-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions button {
+    width: 100%;
+  }
+}
+
+@media print {
+  .masthead,
+  .site-footer,
+  .skip,
+  .tabs,
+  #damage,
+  .actions {
+    display: none !important;
+  }
+
+  #claim {
+    display: block !important;
+  }
+
+  .card {
+    box-shadow: none;
+    border: 0;
   }
 }
 

@@ -277,6 +277,7 @@ def page(template: str, settings: dict, *, title: str, description: str, canonic
             "NAV_TODAY": nav["TODAY"],
             "NAV_ARCHIVE": nav["ARCHIVE"],
             "NAV_ABOUT": nav["ABOUT"],
+            "NAV_TOOLS": 'aria-current="page"' if current == "TOOLS" else "",
             "MAIN": main,
             "YEAR": year,
         },
@@ -644,6 +645,21 @@ def build(root: Path) -> list[dict]:
             current="ARCHIVE",
         ),
     )
+    tool_main = (root / "templates" / "car-tool.html").read_text(encoding="utf-8")
+    write_text(
+        root / "tools" / "car-accident" / "index.html",
+        page(
+            template,
+            settings,
+            title="藝世錄｜車禍求償整合工具",
+            og_title="藝世錄｜車禍求償整合工具",
+            description="車損折舊與民事求償整合工具",
+            canonical=site + "/tools/car-accident/",
+            image=brand_image,
+            main=tool_main,
+            current="TOOLS",
+        ),
+    )
     write_text(
         root / "about" / "index.html",
         page(
@@ -657,7 +673,7 @@ def build(root: Path) -> list[dict]:
             current="ABOUT",
         ),
     )
-    urls = [site + "/", site + "/daily/", site + "/archive/", site + "/about/"]
+    urls = [site + "/", site + "/daily/", site + "/archive/", site + "/about/", site + "/tools/car-accident/"]
     urls.extend(f"{site}/archive/{day}/" for day in sorted({post["date"] for post in posts}))
     urls.extend(f"{site}/column/{post['date']}/{post['slug']}/" for post in posts)
     lines = [
