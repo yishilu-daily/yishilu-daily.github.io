@@ -64,7 +64,8 @@ tags:
 | --- | --- | --- |
 | `title` | 是 | 文章標題 |
 | `date` | 是 | `YYYY-MM-DD`，要和資料夾相同 |
-| `category` | 是 | 例如 `保險`、`理財`、`利率`、`退休` |
+| `category` | 是 | 卡片上的分類，例如 `保險`、`理財`、`利率`、`退休`。若寫成 `finance` 或 `insurance`，會用來分組 |
+| `group` | 否 | `finance` 歸「財經新聞」，`insurance` 歸「保險新聞」。沒寫時，當天文章放在同一個清單 |
 | `summary` | 是 | 首頁卡片上的一兩句話 |
 | `image` | 是 | 同資料夾的圖片檔名 |
 | `image_credit` | 否 | 圖下的小字。沒寫時預設為 `示意圖（AI 生成）` |
@@ -76,7 +77,8 @@ tags:
 
 ## 頁面
 
-- 首頁是最新一天的文章，每篇一張大圖、標題、摘要、日期，下面才是更早的日子。
+- 首頁打開最新一天的專欄。若當天有 `data/briefing/YYYY-MM-DD.json`，財金晨報會出現在文章前面。
+- 文章依 `group` 分成「財經新聞」和「保險新聞」，每組從 1 編號。沒有 `group` 的舊文章維持同一份清單。
 - 每篇文章有自己的網址：`/column/YYYY-MM-DD/NN-slug/`。大圖、圖說、內文，最後是「新聞來源」。圖說來自 `image_credit`。
 - 分享到 LINE / Facebook 時，用的是該篇圖片。
 - `/archive/` 依日期瀏覽。
@@ -126,3 +128,94 @@ python3 -m http.server 8765
 關於我的文字在 `data/about.md`。
 
 `legacy/rss-2026-10-28/` 是舊的連結日報資料，網站不再使用。
+
+## 財金晨報
+
+每天的晨報是一個 JSON，放在 `data/briefing/YYYY-MM-DD.json`。檔名日期要和裡面的 `date` 相同。沒有這個檔案的日子，晨報區塊不會出現，專欄照常顯示。
+
+推上 `main` 之後，GitHub Actions 會把晨報畫進首頁和 `/daily/?d=YYYY-MM-DD`，放在當天文章卡片的上面。頁面有三頁，可用 1/3、2/3、3/3 切換，手機上也可以左右滑。
+
+漲跌用台灣習慣：上漲是紅字 `▲`，下跌是綠字 `▼`。`direction` 只能是 `up` 或 `down`。`change` 和 `pct` 是要顯示的文字，不要自己加箭頭。
+
+```json
+{
+  "date": "2026-11-04",
+  "edition": "晨間版",
+  "disclaimer": "※本報資訊僅供參考，不構成投資建議",
+  "tw": {
+    "asOf": "11/3",
+    "name": "加權指數",
+    "value": "0.00",
+    "direction": "down",
+    "change": "0.00",
+    "pct": "-0.00%",
+    "commentary": "一句話說明當天收盤。"
+  },
+  "us": {
+    "asOf": "11/3 收盤",
+    "rows": [
+      {"name": "道瓊", "value": "0.00", "direction": "up", "change": "0.00", "pct": "+0.00%"},
+      {"name": "標普500", "value": "0.00", "direction": "down", "change": "0.00", "pct": "-0.00%"},
+      {"name": "那斯達克", "value": "0.00", "direction": "down", "change": "0.00", "pct": "-0.00%"},
+      {"name": "費城半導體", "value": "0.00", "direction": "down", "change": "0.00", "pct": "-0.00%"}
+    ]
+  },
+  "asia": {
+    "asOf": "11/3 收盤",
+    "note": "休市或特別說明寫在這裡。",
+    "rows": [
+      {"name": "日經225", "value": "0.00", "direction": "down", "change": "0.00", "pct": "-0.00%"},
+      {"name": "韓國KOSPI", "value": "0.00", "direction": "up", "change": "0.00", "pct": "+0.00%"},
+      {"name": "香港恆生", "value": "0.00", "direction": "up", "change": "0.00", "pct": "+0.00%"},
+      {"name": "上證指數", "value": "0.00", "direction": "up", "change": "0.00", "pct": "+0.00%"}
+    ]
+  },
+  "europe": {
+    "asOf": "11/3 收盤",
+    "rows": [
+      {"name": "德國DAX", "value": "0.00", "direction": "up", "change": "0.00", "pct": "+0.00%"},
+      {"name": "英國富時100", "value": "0.00", "direction": "up", "change": "0.00", "pct": "+0.00%"}
+    ]
+  },
+  "fx": {
+    "asOf": "臺銀 11/3 收盤",
+    "note": "臺銀即期賣出價。▲ 表示外幣升值、新台幣貶值。",
+    "rows": [
+      {"name": "美元 USD", "value": "0.000", "direction": "up", "change": "0.000", "pct": "+0.00%"},
+      {"name": "澳幣 AUD", "value": "0.00", "direction": "up", "change": "0.00", "pct": "+0.00%"},
+      {"name": "歐元 EUR", "value": "0.00", "direction": "up", "change": "0.00", "pct": "+0.00%"},
+      {"name": "日圓（100日圓）", "value": "0.00", "direction": "up", "change": "0.00", "pct": "+0.00%"}
+    ]
+  },
+  "deposits": {
+    "asOf": "牌告 11/4",
+    "rows": [
+      {"name": "新台幣一年期（固定）", "value": "0.000%"},
+      {"name": "美元一年期", "value": "0.00%"},
+      {"name": "美元一個月／三個月", "value": "0.00%"}
+    ]
+  },
+  "commodities": {
+    "asOf": "11/3",
+    "rows": [
+      {"name": "黃金（現貨）", "value": "0", "unit": "美元/盎司", "note": "補充說明"},
+      {"name": "WTI原油", "value": "0.00", "unit": "美元/桶", "pct": "-0.00%", "direction": "down"},
+      {"name": "布蘭特原油", "value": "0.00", "unit": "美元/桶", "pct": "-0.00%", "direction": "down", "note": "補充說明"}
+    ]
+  },
+  "focus": [
+    "財經焦點一，用新聞口吻，不要寫成投資建議。",
+    "財經焦點二。",
+    "財經焦點三。"
+  ],
+  "topics": [
+    {"text": "理財話題。0050、00878 可以當市場新聞寫，不要叫讀者買。", "source": "工商時報", "date": "11/4"}
+  ],
+  "insurance": [
+    {"text": "保險新聞。不要寫保險公司或商品名稱。", "source": "經濟日報", "date": "11/4"}
+  ],
+  "motivation": "今日激勵的一句話。"
+}
+```
+
+欄位都可以省略。某一頁沒有內容時，那一頁不會出現。`focus` 可以是字串，也可以是和 `topics` 一樣的物件。`topics` 與 `insurance` 的 `source`、`date` 會顯示在該則後面。

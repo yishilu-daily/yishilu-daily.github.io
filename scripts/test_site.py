@@ -77,6 +77,8 @@ class SiteTests(unittest.TestCase):
         for day in sorted({post["date"] for post in posts}):
             self.assertIn(f'data-issue="{day}"', daily)
             self.assertIn(f'data-issue="{day}"', home)
+        if not (ROOT / "data" / "briefing" / f"{latest}.json").exists():
+            self.assertNotIn("藝世錄財金晨報", home)
         self.assertIn('property="og:image" content="https://yishilu-daily.github.io/assets/og.jpg"', home)
         self.assertIn('property="og:image:type" content="image/jpeg"', home)
         self.assertIn('property="og:image:width" content="1200"', home)
@@ -115,6 +117,36 @@ class SiteTests(unittest.TestCase):
             self.assertIn("不構成投資建議", article)
             self.assertIn("也不是保險招攬", article)
 
+    def test_groups_and_briefing_are_optional(self):
+        self.assertIsNone(build_site.load_briefing(ROOT, "2026-11-03"))
+        self.assertEqual(build_site.render_briefing(None), "")
+        sample = {
+            "date": "2026-11-04",
+            "edition": "晨間版",
+            "tw": {"name": "加權指數", "value": "1.00", "direction": "up", "change": "1.00", "pct": "+0.01%", "commentary": "範例說明"},
+            "us": {"rows": [{"name": "道瓊", "value": "1.00", "direction": "down", "change": "1.00", "pct": "-0.01%"}]},
+            "focus": ["焦點範例"],
+            "motivation": "加油",
+        }
+        html = build_site.render_briefing(sample)
+        self.assertIn("藝世錄財金晨報", html)
+        self.assertIn("brief-up", html)
+        self.assertIn("brief-down", html)
+        self.assertIn("1/3", html)
+        self.assertNotIn("昶勝軍", html)
+        finance = {"title": "財經", "category": "稅務", "group": "finance", "order": 1, "tags": [], "image_url": "/a.webp", "image_credit": "", "summary": "摘要", "html": "<p>內文</p>", "source_name": "中央社", "source_url": "https://example.com/a", "date": "2026-11-04", "slug": "01-a"}
+        insurance = dict(finance, title="保險", group="insurance", order=2, slug="02-b", source_url="https://example.com/b")
+        plain = dict(finance, title="舊文", group="", category="理財投資", order=1, slug="01-old", date="2026-10-28")
+        grouped = build_site.render_issue_groups([finance, insurance], latest=False)
+        self.assertIn("財經新聞", grouped)
+        self.assertIn("保險新聞", grouped)
+        self.assertEqual(grouped.count('class="issue-no"'), 2)
+        self.assertIn(">1</span>", grouped)
+        default = build_site.render_issue_groups([plain, dict(plain, title="第二篇", order=2)], latest=False)
+        self.assertNotIn("財經新聞", default)
+        self.assertNotIn("保險新聞", default)
+        self.assertIn(">2</span>", default)
+
     def test_workflow_publishes_posts_not_rss(self):
         workflow = (ROOT / ".github" / "workflows" / "build-posts.yml").read_text(encoding="utf-8")
         self.assertIn("posts/**", workflow)
@@ -122,6 +154,7 @@ class SiteTests(unittest.TestCase):
         self.assertNotIn("cron:", workflow)
         self.assertIn("contents: write", workflow)
         self.assertIn("daily", workflow)
+        self.assertIn("data/briefing/**", workflow)
         self.assertFalse((ROOT / ".github" / "workflows" / "daily-news.yml").exists())
 
     def test_fetch_candidates_prints_json_and_skips_failures(self):

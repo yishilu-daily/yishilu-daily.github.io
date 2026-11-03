@@ -215,6 +215,7 @@ def load_posts(root: Path) -> list[dict]:
                 "source_name": meta["source_name"].strip(),
                 "source_url": meta["source_url"].strip(),
                 "image_credit": str(meta.get("image_credit") or "").strip() or "示意圖（AI 生成）",
+                "group": str(meta.get("group") or "").strip().lower(),
                 "tags": list(meta.get("tags") or []),
                 "body": body.strip(),
                 "html": render_markdown(body),
@@ -314,13 +315,17 @@ def absolute_image(settings: dict, image_url: str) -> str:
     return settings["site_url"] + image_url
 
 
-NUMERALS = "一二三四五六七八九十"
+GROUP_TITLES = {"finance": "財經新聞", "insurance": "保險新聞"}
 
 
-def cn_index(number: int) -> str:
-    if 1 <= number <= len(NUMERALS):
-        return NUMERALS[number - 1]
-    return str(number)
+def post_group(post: dict) -> str:
+    raw = str(post.get("group") or "").strip().lower()
+    if raw in GROUP_TITLES:
+        return raw
+    category = str(post.get("category") or "").strip().lower()
+    if category in GROUP_TITLES:
+        return category
+    return ""
 
 
 def issue_dates(posts: list[dict]) -> list[str]:
@@ -344,8 +349,9 @@ def issue_card(post: dict, index: int, *, eager: bool) -> str:
         f'<img src="{esc(post["image_url"])}" alt="" width="1200" height="675" {loading}>'
         f"{credit}</span>"
         '<span class="issue-copy">'
-        f'<span class="issue-kicker"><span class="issue-no">{cn_index(index)}、</span>'
-        f'<span class="tag">{esc(post["category"])}</span></span>'
+        f'<span class="issue-kicker"><span class="issue-no">{index}</span>'
+        + ("" if str(post["category"]).strip().lower() in GROUP_TITLES else f'<span class="tag">{esc(post["category"])}</span>')
+        + "</span>"
         f'<span class="issue-title">{esc(post["title"])}</span>'
         f'<span class="summary">{esc(post["summary"])}</span>'
         f"{flag}</span>"
@@ -359,6 +365,193 @@ def issue_card(post: dict, index: int, *, eager: bool) -> str:
         f'<p class="share-row"><a href="{permalink}">開啟這篇的獨立頁面</a></p>'
         "</div></details></li>"
     )
+
+
+def load_briefing(root: Path, day: str) -> dict | None:
+    path = root / "data" / "briefing" / f"{day}.json"
+    if not path.is_file():
+        return None
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise SystemExit(f"{path} 必須是 JSON 物件")
+    stated = str(data.get("date") or "").strip()
+    if stated and stated != day:
+        raise SystemExit(f"{path} 的 date 必須是 {day}")
+    data["date"] = day
+    return data
+
+
+def _rows(data: dict, key: str) -> list[dict]:
+    block = data.get(key) or {}
+    if isinstance(block, dict):
+        rows = block.get("rows") or []
+    elif isinstance(block, list):
+        rows = block
+    else:
+        rows = []
+    return [row for row in rows if isinstance(row, dict)]
+
+
+def _as_of(data: dict, key: str) -> str:
+    block = data.get(key) or {}
+    if isinstance(block, dict):
+        return str(block.get("asOf") or "").strip()
+    return ""
+
+
+def _note(data: dict, key: str) -> str:
+    block = data.get(key) or {}
+    if isinstance(block, dict):
+        return str(block.get("note") or "").strip()
+    return ""
+
+
+def quote_move(row: dict) -> str:
+    direction = str(row.get("direction") or "").strip().lower()
+    change = str(row.get("change") or "").strip()
+    pct = str(row.get("pct") or "").strip()
+    if direction not in {"up", "down"} and not change and not pct:
+        return ""
+    arrow = {"up": "▲", "down": "▼"}.get(direction, "")
+    text = f"{arrow}{change}".strip()
+    if pct:
+        text = f"{text} ({pct})".strip()
+    klass = f" brief-{direction}" if direction in {"up", "down"} else ""
+    return f'<span class="brief-move{klass}">{esc(text)}</span>'
+
+
+def quote_row(row: dict, *, featured: bool = False) -> str:
+    unit = str(row.get("unit") or "").strip()
+    value = str(row.get("value") or "").strip()
+    shown = f"{value} {unit}".strip()
+    note = str(row.get("note") or "").strip()
+    extra = f'<span class="brief-note">{esc(note)}</span>' if note else ""
+    klass = "brief-quote featured" if featured else "brief-quote"
+    return (
+        f'<div class="{klass}"><span class="brief-name">{esc(str(row.get("name") or ""))}</span>'
+        f'<span class="brief-value">{esc(shown)}</span>{quote_move(row)}{extra}</div>'
+    )
+
+
+def quote_block(title: str, rows: list[dict], *, as_of: str = "", note: str = "", commentary: str = "", featured: bool = False) -> str:
+    if not rows and not note and not commentary:
+        return ""
+    body = "".join(quote_row(row, featured=featured and index == 0) for index, row in enumerate(rows))
+    comment = f'<p class="brief-commentary">{esc(commentary)}</p>' if commentary else ""
+    aside = f'<p class="brief-aside">{esc(note)}</p>' if note else ""
+    stamp = f'<span class="brief-asof">{esc(as_of)}</span>' if as_of else ""
+    return f'<section class="brief-card"><header><h3>{esc(title)}</h3>{stamp}</header>{body}{comment}{aside}</section>'
+
+
+def numbered_block(title: str, items: list) -> str:
+    rows = []
+    for index, item in enumerate(items, start=1):
+        if isinstance(item, str):
+            text, source, when = item, "", ""
+        elif isinstance(item, dict):
+            text = str(item.get("text") or "").strip()
+            source = str(item.get("source") or "").strip()
+            when = str(item.get("date") or "").strip()
+        else:
+            continue
+        if not text:
+            continue
+        credit = " ".join(part for part in (source, when) if part)
+        source_html = f'<span class="brief-source">{esc(credit)}</span>' if credit else ""
+        rows.append(f"<li><span class=\"brief-index\">{index}</span><p>{esc(text)}{source_html}</p></li>")
+    if not rows:
+        return ""
+    return f'<section class="brief-card"><h3>{esc(title)}</h3><ol class="brief-points">{"".join(rows)}</ol></section>'
+
+
+def render_briefing(data: dict | None) -> str:
+    if not data:
+        return ""
+    day = str(data.get("date") or "")
+    edition = str(data.get("edition") or "晨間版").strip()
+    label = edition
+    if day:
+        year, month, date = (int(part) for part in day.split("-"))
+        weekday = "一二三四五六日"[datetime.fromisoformat(day).weekday()]
+        label = f"{year}/{month}/{date}（{weekday}）{edition}"
+    tw = data.get("tw") if isinstance(data.get("tw"), dict) else {}
+    page1 = "".join(
+        [
+            quote_block(
+                "台股",
+                [tw] if tw.get("name") or tw.get("value") else [],
+                as_of=_as_of(data, "tw"),
+                commentary=str(tw.get("commentary") or "").strip(),
+                featured=True,
+            ),
+            quote_block("美股", _rows(data, "us"), as_of=_as_of(data, "us")),
+            quote_block("亞股", _rows(data, "asia"), as_of=_as_of(data, "asia"), note=_note(data, "asia")),
+            quote_block("歐股", _rows(data, "europe"), as_of=_as_of(data, "europe")),
+        ]
+    )
+    page2 = "".join(
+        [
+            quote_block("匯率（兌新台幣）", _rows(data, "fx"), as_of=_as_of(data, "fx"), note=_note(data, "fx")),
+            quote_block("定存利率（臺灣銀行牌告）", _rows(data, "deposits"), as_of=_as_of(data, "deposits")),
+            quote_block("原物料", _rows(data, "commodities"), as_of=_as_of(data, "commodities")),
+            numbered_block("財經焦點", data.get("focus") or []),
+        ]
+    )
+    page3 = "".join(
+        [
+            numbered_block("理財話題", data.get("topics") or []),
+            numbered_block("保險新聞", data.get("insurance") or []),
+            f'<section class="brief-card brief-motivate"><h3>今日激勵</h3><p>{esc(str(data.get("motivation") or ""))}</p></section>'
+            if str(data.get("motivation") or "").strip()
+            else "",
+        ]
+    )
+    pages = [page for page in (page1, page2, page3) if page.strip()]
+    if not pages:
+        return ""
+    tabs = "".join(
+        f'<button type="button" class="brief-tab" data-brief-tab="{index}" aria-selected="{"true" if index == 0 else "false"}">{index + 1}/{len(pages)}</button>'
+        for index in range(len(pages))
+    )
+    sheets = "".join(
+        f'<div class="brief-page" data-brief-page="{index}"{" hidden" if index else ""}>{html}</div>'
+        for index, html in enumerate(pages)
+    )
+    disclaimer = str(data.get("disclaimer") or "※本報資訊僅供參考，不構成投資建議")
+    return (
+        '<section class="briefing" data-briefing>'
+        '<header class="brief-head"><div><p class="eyebrow">Morning Brief</p><h2>藝世錄財金晨報</h2>'
+        f'<p class="brief-edition">{esc(label)}</p></div>'
+        f'<div class="brief-tabs" role="tablist" aria-label="晨報頁面">{tabs}</div></header>'
+        f'<div class="brief-viewport">{sheets}</div>'
+        f'<p class="brief-disclaimer">{esc(disclaimer)}</p></section>'
+    )
+
+
+def render_issue_groups(posts: list[dict], *, latest: bool) -> str:
+    buckets: dict[str, list[dict]] = {"finance": [], "insurance": [], "": []}
+    for post in posts:
+        buckets[post_group(post)].append(post)
+    classified = bool(buckets["finance"] or buckets["insurance"])
+    parts: list[str] = []
+    eager_used = False
+    for key in ("finance", "insurance", ""):
+        chosen = buckets[key]
+        if not chosen:
+            continue
+        if key == "" and not classified:
+            heading = ""
+        elif key == "":
+            heading = '<h2 class="issue-group">其他</h2>'
+        else:
+            heading = f'<h2 class="issue-group">{GROUP_TITLES[key]}</h2>'
+        cards = []
+        for index, post in enumerate(chosen, start=1):
+            eager = latest and not eager_used
+            eager_used = eager_used or eager
+            cards.append(issue_card(post, index, eager=eager))
+        parts.append(f'{heading}<ol class="issue-list">{"".join(cards)}</ol>')
+    return "".join(parts)
 
 
 def render_issues(posts: list[dict]) -> str:
@@ -376,17 +569,15 @@ def render_issues(posts: list[dict]) -> str:
     sections = []
     for day in dates:
         chosen = sorted(grouped[day], key=lambda post: post["order"])
-        cards = "".join(
-            issue_card(post, index, eager=day == latest and index == 1)
-            for index, post in enumerate(chosen, start=1)
-        )
+        groups = render_issue_groups(chosen, latest=day == latest)
+        briefing = render_briefing(load_briefing(ROOT, day))
         hidden = "" if day == latest else " hidden"
         sections.append(
             f'<section class="issue" data-issue="{esc(day)}"{hidden}>'
             '<p class="eyebrow">Daily Column</p>'
             f"<h1>{esc(format_date(day))}</h1>"
             f'<p class="edition-meta">{weekday_label(day)} · {len(chosen)} 篇</p>'
-            f'<ol class="issue-list">{cards}</ol></section>'
+            f"{briefing}{groups}</section>"
         )
     prev_day = dates[-2] if len(dates) > 1 else ""
     if prev_day:
@@ -405,7 +596,8 @@ def render_issues(posts: list[dict]) -> str:
         f"{next_html}</form>"
         '<p class="issue-empty" data-issue-empty hidden><span data-empty-label></span>這一天還沒有專欄。用前一天或後一天，跳到最近有文章的日子。</p>'
         + "".join(sections)
-        + '<script src="/assets/daily.js?v=2" defer></script></div>'
+        + '<script src="/assets/daily.js?v=2" defer></script>'
+        '<script src="/assets/briefing.js?v=1" defer></script></div>'
     )
 
 
