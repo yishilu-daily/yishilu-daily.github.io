@@ -482,6 +482,7 @@ def render_briefing(data: dict | None) -> str:
                 [tw] if tw.get("name") or tw.get("value") else [],
                 as_of=_as_of(data, "tw"),
                 commentary=str(tw.get("commentary") or "").strip(),
+                note=_note(data, "tw"),
                 featured=True,
             ),
             quote_block("美股", _rows(data, "us"), as_of=_as_of(data, "us")),

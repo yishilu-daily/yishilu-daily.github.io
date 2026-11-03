@@ -79,6 +79,11 @@ class SiteTests(unittest.TestCase):
             self.assertIn(f'data-issue="{day}"', home)
         if not (ROOT / "data" / "briefing" / f"{latest}.json").exists():
             self.assertNotIn("藝世錄財金晨報", home)
+        else:
+            self.assertIn("藝世錄財金晨報", home)
+            self.assertIn("44,920.14", home)
+            self.assertIn("工商時報", home)
+            self.assertIn("11/3", home)
         self.assertIn('property="og:image" content="https://yishilu-daily.github.io/assets/og.jpg"', home)
         self.assertIn('property="og:image:type" content="image/jpeg"', home)
         self.assertIn('property="og:image:width" content="1200"', home)
@@ -118,7 +123,10 @@ class SiteTests(unittest.TestCase):
             self.assertIn("也不是保險招攬", article)
 
     def test_groups_and_briefing_are_optional(self):
-        self.assertIsNone(build_site.load_briefing(ROOT, "2026-11-03"))
+        published = build_site.load_briefing(ROOT, "2026-11-03")
+        self.assertIsNotNone(published)
+        self.assertEqual(published["date"], "2026-11-03")
+        self.assertIn("44,920.14", json.dumps(published, ensure_ascii=False))
         self.assertEqual(build_site.render_briefing(None), "")
         sample = {
             "date": "2026-11-04",
