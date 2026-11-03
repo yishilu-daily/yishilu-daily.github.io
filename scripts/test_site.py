@@ -101,7 +101,7 @@ class SiteTests(unittest.TestCase):
         about = (ROOT / "about" / "index.html").read_text(encoding="utf-8")
         self.assertNotIn('href="/profile/"', about)
         self.assertNotIn("認識我", about)
-        self.assertIn("我是許欣霈（Show），在富邦人壽擔任保險業務，同時負責單位主管的工作，也是藝世錄團隊的領導者。", about)
+        self.assertIn("我是許欣霈（Show），在富邦人壽擔任保險業務，同時負責單位主管的工作，也是藝世錄團隊的團隊長。", about)
         for post in posts:
             article = (ROOT / "column" / post["date"] / post["slug"] / "index.html").read_text(encoding="utf-8")
             self.assertIn(post["image_url"], article)
