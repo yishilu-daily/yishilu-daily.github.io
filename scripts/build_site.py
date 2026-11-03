@@ -435,7 +435,7 @@ def quote_row(row: dict, *, featured: bool = False) -> str:
     row_title = f' title="{esc(note)}"' if note and not visible_note else ""
     name = str(row.get("name") or "")
     value_klass = "brief-value"
-    if not featured and direction in {"up", "down"}:
+    if direction in {"up", "down"}:
         value_klass += f" brief-{direction}"
     unit_html = f'<span class="brief-unit">{esc(unit)}</span>' if unit else ""
     klass = "brief-quote featured" if featured else "brief-quote"
@@ -499,8 +499,8 @@ def quote_block(title: str, rows: list[dict], *, as_of: str = "", note: str = ""
     if not rows and not note and not commentary:
         return ""
     body = "".join(quote_row(row, featured=featured and index == 0) for index, row in enumerate(rows))
-    comment = f'<p class="brief-commentary" title="{esc(commentary)}">{esc(commentary)}</p>' if commentary else ""
-    aside = f'<p class="brief-aside" title="{esc(note)}">{esc(note)}</p>' if note else ""
+    comment = f'<p class="brief-commentary">{esc(commentary)}</p>' if commentary else ""
+    aside = f'<p class="brief-aside">{esc(note)}</p>' if note else ""
     stamp = f'<span class="brief-asof">{esc(bracket(as_of))}</span>' if as_of else ""
     icon = brief_icon(SECTION_ICONS.get(title, "chart"))
     return f'<section class="brief-card"><header><h3>{icon}{esc(title)}</h3>{stamp}</header>{body}{comment}{aside}</section>'
@@ -586,13 +586,14 @@ def render_briefing(data: dict | None, posts: list[dict] | None = None) -> str:
         disclaimer = f"※{disclaimer}"
     opener = PAGE_TITLES[0]
     return (
-        '<section class="briefing" data-briefing>'
+        '<section class="briefing brief-lead" data-briefing>'
         '<header class="brief-head">'
+        '<div class="brief-brand">'
         '<span class="brief-logo"><img src="/assets/logo.png" alt="" width="64" height="64"></span>'
-        '<div class="brief-titleblock">'
-        f'<h2 data-brief-title>{esc(opener)}</h2>'
-        f'<p class="brief-edition">{esc(label)}</p></div>'
-        f'<div class="brief-tabs" role="tablist" aria-label="晨報頁面">{tabs}</div></header>'
+        f'<h2 data-brief-title>{esc(opener)}</h2></div>'
+        f'<div class="brief-tabs" role="tablist" aria-label="晨報頁面">{tabs}</div>'
+        '<p class="brief-rule" aria-hidden="true"><span></span></p>'
+        f'<p class="brief-edition">{esc(label)}</p></header>'
         f'<div class="brief-viewport">{sheets}</div>'
         '<footer class="brief-foot">'
         f'<p class="brief-disclaimer">{esc(disclaimer)}</p>'
@@ -613,8 +614,8 @@ def brief_story(post: dict, index: int, *, eager: bool) -> str:
         f'<span class="brief-story-no">{index}</span>'
         '<span class="brief-story-copy">'
         f'<span class="brief-story-title">{esc(post["title"])}</span>'
-        f'<span class="thumb-credit">{esc(credit)}</span></span>'
-        f'<span class="brief-story-source">{esc(tag)}</span>'
+        f'<span class="thumb-credit">{esc(credit)}</span>'
+        f'<span class="brief-story-source">{esc(tag)}</span></span>'
         "</a></li>"
     )
 
@@ -704,7 +705,7 @@ def render_issues(posts: list[dict]) -> str:
         '<p class="issue-empty" data-issue-empty hidden><span data-empty-label></span>這一天還沒有專欄。用前一天或後一天，跳到最近有文章的日子。</p>'
         + "".join(sections)
         + '<script src="/assets/daily.js?v=3" defer></script>'
-        '<script src="/assets/briefing.js?v=2" defer></script></div>'
+        '<script src="/assets/briefing.js?v=3" defer></script></div>'
     )
 
 

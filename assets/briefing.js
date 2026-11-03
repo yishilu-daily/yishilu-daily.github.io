@@ -21,6 +21,7 @@
       var pager = root.querySelector("[data-brief-pager]");
       if (title && name) title.textContent = name;
       if (pager && name) pager.textContent = name + " · " + (index + 1) + "/" + pages.length;
+      root.classList.toggle("brief-lead", index === 0);
     }
 
     tabs.forEach(function (tab) {
