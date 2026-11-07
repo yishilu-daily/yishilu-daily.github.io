@@ -2040,49 +2040,10 @@ body.brief-fit .brief-pager {
   white-space: nowrap;
 }
 
-body.brief-fit .briefing.brief-board {
-  background:
-    radial-gradient(ellipse at 50% 18%, rgba(198, 161, 90, 0.16), transparent 42%),
-    #100e0c;
-  color: #f6edd8;
-  border: 1px solid #e6c98a;
-  box-shadow: inset 0 0 0 1px rgba(198, 161, 90, 0.45), 0 18px 40px -28px rgba(0, 0, 0, 0.8);
-}
-
-body.brief-fit .briefing.brief-board::before {
-  opacity: 0.07;
-  mix-blend-mode: screen;
-}
-
-body.brief-fit .briefing.brief-board .brief-head {
-  border-bottom-color: rgba(198, 161, 90, 0.35);
-}
-
-body.brief-fit .briefing.brief-board .brief-head h2,
-body.brief-fit .briefing.brief-board .brief-edition,
-body.brief-fit .briefing.brief-board .brief-pager {
-  color: #e8d5a3;
-}
-
 body.brief-fit .briefing.brief-board .brief-head h2 {
   font-size: 0.92rem;
   letter-spacing: 0.08em;
-}
-
-body.brief-fit .briefing.brief-board .brief-disclaimer {
-  color: #b7a88a;
-}
-
-body.brief-fit .briefing.brief-board .brief-tab {
-  color: #e8d5a3;
-  border-color: #8a7040;
-  background: transparent;
-}
-
-body.brief-fit .briefing.brief-board .brief-tab[aria-selected="true"] {
-  color: #1a140c;
-  background: #c6a15a;
-  border-color: #e6c98a;
+  color: #6e5638;
 }
 
 body.brief-fit .brief-overview-page:not([hidden]) {
@@ -2137,21 +2098,21 @@ body.brief-fit .ov-sec h3 {
   align-items: center;
   gap: 3px;
   margin: 0;
-  color: #e8d5a3;
+  color: #6e5638;
   font-size: 11px;
   line-height: 1.2;
   letter-spacing: 0.08em;
 }
 
-body.brief-fit .briefing.brief-board .ov-hero .brief-icon,
-body.brief-fit .briefing.brief-board .ov-sec .brief-icon {
+body.brief-fit .ov-hero .brief-icon,
+body.brief-fit .ov-sec .brief-icon {
   width: 11px;
   height: 11px;
-  stroke: #e8d5a3;
+  stroke: #a5865a;
 }
 
 body.brief-fit .ov-asof {
-  color: #b7a88a;
+  color: #6f675d;
   font-size: 9px;
   letter-spacing: 0;
   white-space: nowrap;
@@ -2166,7 +2127,7 @@ body.brief-fit .ov-hero-row {
 }
 
 body.brief-fit .ov-hero-value {
-  color: #f7f1e4;
+  color: #1d1b19;
   font-family: var(--serif);
   font-size: 30px;
   font-weight: 700;
@@ -2203,9 +2164,9 @@ body.brief-fit .ov-cell {
   align-items: center;
   gap: 0;
   padding: 2px 2px;
-  border: 1px solid rgba(198, 161, 90, 0.62);
+  border: 1px solid #e3dacb;
   border-radius: 7px;
-  background: rgba(255, 248, 230, 0.04);
+  background: rgba(239, 232, 221, 0.72);
   text-align: center;
   overflow: hidden;
 }
@@ -2213,7 +2174,7 @@ body.brief-fit .ov-cell {
 body.brief-fit .ov-name,
 body.brief-fit .ov-dep-name {
   max-width: 100%;
-  color: #e8d5a3;
+  color: #6e5638;
   font-size: 10px;
   font-weight: 600;
   line-height: 1.15;
@@ -2222,7 +2183,7 @@ body.brief-fit .ov-dep-name {
 
 body.brief-fit .ov-value,
 body.brief-fit .ov-dep-value {
-  color: #f7f1e4;
+  color: #1d1b19;
   font-family: var(--serif);
   font-size: 13px;
   font-weight: 700;
@@ -2234,20 +2195,20 @@ body.brief-fit .ov-move {
   font-size: 10px;
   font-weight: 700;
   line-height: 1.1;
-  color: #f7f1e4;
+  color: #1d1b19;
   white-space: nowrap;
 }
 
 body.brief-fit .ov-up {
-  color: #ff5c6c;
+  color: #9f2d2d;
 }
 
 body.brief-fit .ov-down {
-  color: #3ddc84;
+  color: #146c3a;
 }
 
 body.brief-fit .ov-unit {
-  color: #b7a88a;
+  color: #6f675d;
   font-size: 8px;
   line-height: 1.1;
 }
