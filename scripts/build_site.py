@@ -476,7 +476,113 @@ SECTION_ICONS = {
     "保險新聞": "shield",
 }
 
-PAGE_TITLES = ("藝世錄股市動向", "藝世錄每日匯率", "藝世錄財金日報")
+PAGE_TITLES = ("藝世錄股市動向", "藝世錄每日匯率", "藝世錄財金日報", "藝世錄財金晨報")
+
+
+def shown(value) -> str:
+    if value is None:
+        return "—"
+    text = str(value).strip()
+    return text if text else "—"
+
+
+def overview_move(row: dict) -> str:
+    direction = str(row.get("direction") or "").strip().lower()
+    has_dir = direction in {"up", "down"}
+    pct = row.get("pct")
+    change = row.get("change")
+    if not has_dir and pct is None and change is None:
+        return ""
+    if pct is not None and str(pct).strip():
+        label = str(pct).strip()
+    elif change is not None and str(change).strip():
+        label = str(change).strip()
+    else:
+        label = "—"
+    arrow = {"up": "▲", "down": "▼"}.get(direction, "")
+    klass = f" ov-{direction}" if has_dir else ""
+    return f'<span class="ov-move{klass}">{esc(arrow + label)}</span>'
+
+
+def overview_cell(row: dict) -> str:
+    direction = str(row.get("direction") or "").strip().lower()
+    value_klass = "ov-value"
+    if direction in {"up", "down"}:
+        value_klass += f" ov-{direction}"
+    unit = row.get("unit")
+    unit_html = f'<span class="ov-unit">{esc(shown(unit))}</span>' if unit not in (None, "") else ""
+    return (
+        '<div class="ov-cell">'
+        f'<span class="ov-name">{esc(shown(row.get("name")))}</span>'
+        f'<span class="{value_klass}">{esc(shown(row.get("value")))}</span>'
+        f"{overview_move(row)}{unit_html}</div>"
+    )
+
+
+def overview_section(title: str, rows: list[dict], as_of: str, *, cols: int) -> str:
+    cells = "".join(overview_cell(row) for row in rows)
+    if not cells:
+        cells = '<div class="ov-cell"><span class="ov-name">—</span><span class="ov-value">—</span></div>'
+    stamp = esc(as_of) if as_of else "—"
+    icon = brief_icon(SECTION_ICONS.get(title, "chart"))
+    return (
+        f'<section class="ov-sec" data-cols="{cols}"><header><h3>{icon}{esc(title)}</h3>'
+        f'<span class="ov-asof">{stamp}</span></header><div class="ov-grid">{cells}</div></section>'
+    )
+
+
+def overview_deposits(rows: list[dict], as_of: str) -> str:
+    if rows:
+        items = "".join(
+            f'<li><span class="ov-dep-name">{esc(shown(row.get("name")))}</span>'
+            f'<span class="ov-dep-value">{esc(shown(row.get("value")))}</span></li>'
+            for row in rows
+        )
+    else:
+        items = '<li><span class="ov-dep-name">—</span><span class="ov-dep-value">—</span></li>'
+    stamp = esc(as_of) if as_of else "—"
+    icon = brief_icon("bank")
+    return (
+        f'<section class="ov-sec ov-deps"><header><h3>{icon}定存利率</h3>'
+        f'<span class="ov-asof">{stamp}</span></header><ul class="ov-deps">{items}</ul></section>'
+    )
+
+
+def overview_hero(tw: dict, as_of: str) -> str:
+    direction = str((tw or {}).get("direction") or "").strip().lower()
+    klass = "ov-hero-value"
+    if direction in {"up", "down"}:
+        klass += f" ov-{direction}"
+    if tw:
+        meta = f"{shown(tw.get('name'))} · {as_of or '—'}"
+        value = shown(tw.get("value"))
+        move = overview_move(tw) or '<span class="ov-move">—</span>'
+    else:
+        meta = "—"
+        value = "—"
+        move = '<span class="ov-move">—</span>'
+    return (
+        f'<section class="ov-hero"><header><h3>{brief_icon("chart")}台股</h3>'
+        f'<span class="ov-asof">{esc(meta)}</span></header>'
+        f'<div class="ov-hero-row"><span class="{klass}">{esc(value)}</span>{move}</div></section>'
+    )
+
+
+def render_overview(data: dict) -> str:
+    tw = data.get("tw") if isinstance(data.get("tw"), dict) else {}
+    return (
+        '<div class="brief-overview">'
+        + overview_hero(tw, _as_of(data, "tw"))
+        + overview_section("美股", _rows(data, "us"), _as_of(data, "us"), cols=4)
+        + overview_section("亞股", _rows(data, "asia"), _as_of(data, "asia"), cols=4)
+        + '<div class="ov-split">'
+        + overview_section("歐股", _rows(data, "europe"), _as_of(data, "europe"), cols=2)
+        + overview_deposits(_rows(data, "deposits"), _as_of(data, "deposits"))
+        + "</div>"
+        + overview_section("匯率（兌新台幣）", _rows(data, "fx"), _as_of(data, "fx"), cols=4)
+        + overview_section("原物料", _rows(data, "commodities"), _as_of(data, "commodities"), cols=3)
+        + "</div>"
+    )
 
 
 def bracket(text: str) -> str:
@@ -570,15 +676,13 @@ def render_briefing(data: dict | None, posts: list[dict] | None = None) -> str:
         include_default=False,
         compact=True,
     )
-    pages = [page1, page2, page3]
-    if not pages:
-        return ""
+    pages = [page1, page2, page3, render_overview(data)]
     tabs = "".join(
         f'<button type="button" class="brief-tab" data-brief-tab="{index}" aria-selected="{"true" if index == 0 else "false"}">{index + 1}/{len(pages)}</button>'
         for index in range(len(pages))
     )
     sheets = "".join(
-        f'<div class="brief-page" data-brief-page="{index}" data-brief-name="{esc(PAGE_TITLES[index])}"{" hidden" if index else ""}>{html}</div>'
+        f'<div class="brief-page{" brief-overview-page" if index == len(pages) - 1 else ""}" data-brief-page="{index}" data-brief-name="{esc(PAGE_TITLES[index])}"{" hidden" if index else ""}>{html}</div>'
         for index, html in enumerate(pages)
     )
     disclaimer = str(data.get("disclaimer") or "本報資訊僅供參考，不構成投資建議").strip()
@@ -705,7 +809,7 @@ def render_issues(posts: list[dict]) -> str:
         '<p class="issue-empty" data-issue-empty hidden><span data-empty-label></span>這一天還沒有專欄。用前一天或後一天，跳到最近有文章的日子。</p>'
         + "".join(sections)
         + '<script src="/assets/daily.js?v=3" defer></script>'
-        '<script src="/assets/briefing.js?v=3" defer></script></div>'
+        '<script src="/assets/briefing.js?v=4" defer></script></div>'
     )
 
 

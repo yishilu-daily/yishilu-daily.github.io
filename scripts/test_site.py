@@ -84,8 +84,13 @@ class SiteTests(unittest.TestCase):
             self.assertIn("藝世錄股市動向", home)
             self.assertIn("藝世錄每日匯率", home)
             self.assertIn("藝世錄財金日報", home)
+            self.assertIn('data-brief-name="藝世錄財金晨報"', home)
+            self.assertIn(">1/4<", home)
+            self.assertIn(">4/4<", home)
+            self.assertNotIn(">1/3<", home)
+            self.assertNotIn(">3/3<", home)
             self.assertNotIn("晨間版", home)
-            self.assertNotIn("藝世錄財金晨報", home)
+            self.assertNotIn("昶勝軍", home)
             self.assertIn("44,920.14", home)
             self.assertEqual(home.count("7,588.75"), 1)
             self.assertNotIn("機動 1.690%", home)
@@ -111,6 +116,15 @@ class SiteTests(unittest.TestCase):
             self.assertIn("〔經濟日報 11/3〕", page3)
             self.assertIn('class="brief-logo"', nov3)
             self.assertIn('class="brief-fit"', home)
+            latest_issue = home.split(f'data-issue="{latest}"', 1)[1]
+            page4 = latest_issue.split('data-brief-page="3"', 1)[1].split('class="brief-disclaimer"', 1)[0]
+            self.assertIn("藝世錄財金晨報", page4)
+            self.assertIn("39,701.64", page4)
+            self.assertIn("4.51%", page4)
+            self.assertIn("ov-down", page4)
+            self.assertIn("ov-up", page4)
+            self.assertNotIn("昶勝軍", page4)
+            self.assertNotIn("理財話題", page4)
             oct28 = home.split('data-issue="2026-10-28"', 1)[1].split('data-issue="', 1)[0]
             self.assertNotIn("藝世錄股市動向", oct28)
             self.assertNotIn("理財話題", oct28)
@@ -180,8 +194,23 @@ class SiteTests(unittest.TestCase):
         self.assertNotIn("晨間版", html)
         self.assertIn("brief-up", html)
         self.assertIn("brief-down", html)
-        self.assertIn("1/3", html)
-        self.assertIn("3/3", html)
+        self.assertIn(">1/4<", html)
+        self.assertIn(">4/4<", html)
+        self.assertNotIn(">1/3<", html)
+        self.assertNotIn(">3/3<", html)
+        overview = html.split("brief-overview", 1)[1]
+        self.assertIn(">—<", overview)
+        self.assertIn("道瓊", overview)
+        self.assertNotIn("昶勝軍", overview)
+        blank = build_site.render_briefing({
+            "date": "2026-11-04",
+            "tw": {"name": "加權指數", "value": None, "direction": "down", "change": None, "pct": None},
+            "asia": {"rows": [{"name": "上證", "value": "3", "direction": "up", "change": None, "pct": None}]},
+        })
+        board = blank.split("brief-overview", 1)[1]
+        self.assertIn(">—<", board)
+        self.assertEqual(build_site.shown(None), "—")
+        self.assertEqual(build_site.shown(0), "0")
         self.assertIn("理財話題", html)
         self.assertIn("保險新聞", html)
         self.assertIn("示意圖（AI 生成）", html)

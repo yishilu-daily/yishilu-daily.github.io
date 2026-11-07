@@ -22,6 +22,7 @@
       if (title && name) title.textContent = name;
       if (pager && name) pager.textContent = name + " · " + (index + 1) + "/" + pages.length;
       root.classList.toggle("brief-lead", index === 0);
+      root.classList.toggle("brief-board", pages[index].classList.contains("brief-overview-page"));
     }
 
     tabs.forEach(function (tab) {
