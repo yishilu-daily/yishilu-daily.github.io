@@ -118,9 +118,10 @@ class SiteTests(unittest.TestCase):
             self.assertIn('class="brief-fit"', home)
             latest_issue = home.split(f'data-issue="{latest}"', 1)[1]
             page4 = latest_issue.split('data-brief-page="3"', 1)[1].split('class="brief-disclaimer"', 1)[0]
+            latest_brief = json.loads((ROOT / "data" / "briefing" / f"{latest}.json").read_text(encoding="utf-8"))
             self.assertIn("藝世錄財金晨報", page4)
-            self.assertIn("39,701.64", page4)
-            self.assertIn("4.51%", page4)
+            self.assertIn(str(latest_brief["tw"]["value"]), page4)
+            self.assertIn(str(latest_brief["tw"]["pct"]), page4)
             self.assertIn("ov-down", page4)
             self.assertIn("ov-up", page4)
             self.assertNotIn("昶勝軍", page4)
