@@ -164,7 +164,7 @@ class SiteTests(unittest.TestCase):
             if post.get("image_credit"):
                 self.assertIn(post["image_credit"], article)
             self.assertIn("新聞來源", article)
-            self.assertIn(post["source_url"], article)
+            self.assertIn(build_site.esc(post["source_url"]), article)
             self.assertIn('property="og:type" content="article"', article)
             self.assertIn("不構成投資建議", article)
             self.assertIn("也不是保險招攬", article)
